@@ -1,0 +1,28 @@
+# ===== 森柏后端依赖 =====
+# Web 框架
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# 数据库（本地用 SQLite，云托管用 MySQL）
+sqlalchemy==2.0.35
+PyMySQL==1.1.1
+
+# 认证（密码哈希 + JWT）
+bcrypt==4.2.0
+python-jose[cryptography]==3.3.0
+python-multipart==0.0.12
+
+# 爬虫
+feedparser==6.0.11
+httpx==0.27.2
+
+# AI 总结（OpenAI 兼容接口，智谱/通义/Kimi/DeepSeek 都能用）
+openai==1.51.0
+
+# 定时任务
+apscheduler==3.10.4
+
+# 配置与工具
+python-dotenv==1.0.1
+pydantic==2.9.2
+pydantic-settings==2.5.2
