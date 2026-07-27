@@ -1,0 +1,15 @@
+# Docker 构建时忽略这些文件，减小镜像体积
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.db-journal
+.env
+.git/
+.gitignore
+*.md
+deploy.sh
+run_crawl.py
+seed_test_articles.py
