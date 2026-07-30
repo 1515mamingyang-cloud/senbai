@@ -5,6 +5,7 @@
 - 云托管生产：MySQL（微信云托管自带，通过环境变量配置）
 """
 import os
+from urllib.parse import quote_plus
 from pydantic_settings import BaseSettings
 
 
@@ -55,8 +56,11 @@ def _build_database_url() -> str:
         mysql_user = os.environ.get("MYSQL_USER", "root")
         mysql_password = os.environ.get("MYSQL_PASSWORD", "")
         mysql_database = os.environ.get("MYSQL_DATABASE", "senbai")
+        # 对密码做 URL 编码，处理 @、#、: 等特殊字符
+        # 否则密码里的 @ 会被误解析为 URL 分隔符
+        encoded_password = quote_plus(mysql_password)
         return (
-            f"mysql+pymysql://{mysql_user}:{mysql_password}"
+            f"mysql+pymysql://{mysql_user}:{encoded_password}"
             f"@{mysql_host}:{mysql_port}/{mysql_database}?charset=utf8mb4"
         )
 
