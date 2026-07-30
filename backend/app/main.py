@@ -34,6 +34,12 @@ def init_data():
     # 1. 建表
     init_db()
 
+    # 记录环境变量读取情况（密码打码）
+    logger.info(f"[init] INIT_ADMIN_USERNAME={settings.init_admin_username or '(空)'}")
+    logger.info(f"[init] INIT_ADMIN_PASSWORD={'***已设***' if settings.init_admin_password else '(空)'}")
+    logger.info(f"[init] LLM_API_KEY={'***已设***' if settings.llm_api_key else '(空)'}")
+    logger.info(f"[init] DATABASE_URL={settings.database_url}")
+
     db = SessionLocal()
     try:
         # 2. 行业数据（表为空才初始化）
@@ -44,16 +50,21 @@ def init_data():
             db.commit()
             logger.info(f"已初始化 {len(DEFAULT_INDUSTRIES)} 个行业")
 
-        # 3. 管理员账号（设置了环境变量且无用户时才创建）
-        if settings.init_admin_username and settings.init_admin_password:
-            user_count = db.execute(select(User)).scalars().all()
-            if not user_count:
-                db.add(User(
-                    username=settings.init_admin_username,
-                    hashed_password=hash_password(settings.init_admin_password),
-                ))
-                db.commit()
-                logger.info(f"已创建管理员账号: {settings.init_admin_username}")
+        # 3. 管理员账号
+        # 优先用环境变量，兜底用默认值（确保云托管一定能登录）
+        admin_username = settings.init_admin_username or "mamingyang"
+        admin_password = settings.init_admin_password or "123456"
+
+        user_count = db.execute(select(User)).scalars().all()
+        if not user_count:
+            db.add(User(
+                username=admin_username,
+                hashed_password=hash_password(admin_password),
+            ))
+            db.commit()
+            logger.info(f"已创建管理员账号: {admin_username}")
+        else:
+            logger.info(f"已有 {len(user_count)} 个用户，跳过创建管理员")
     finally:
         db.close()
 
@@ -92,3 +103,28 @@ app.include_router(industries.router)
 @app.get("/", tags=["健康检查"])
 def root():
     return {"status": "ok", "service": "森柏 API", "version": "0.1.0"}
+
+
+@app.get("/debug", tags=["调试"])
+def debug():
+    """调试接口：查看环境变量和数据库状态（仅排查用，正式上线删除）"""
+    from app.models import Industry, User
+    db = SessionLocal()
+    try:
+        industries = db.execute(select(Industry)).scalars().all()
+        users = db.execute(select(User)).scalars().all()
+        return {
+            "env": {
+                "INIT_ADMIN_USERNAME": settings.init_admin_username or "(空)",
+                "INIT_ADMIN_PASSWORD": "***" if settings.init_admin_password else "(空)",
+                "LLM_API_KEY": "***" if settings.llm_api_key else "(空)",
+                "DATABASE_URL": settings.database_url[:50] + "..." if len(settings.database_url) > 50 else settings.database_url,
+            },
+            "db": {
+                "industries_count": len(industries),
+                "users_count": len(users),
+                "users": [u.username for u in users],
+            },
+        }
+    finally:
+        db.close()
