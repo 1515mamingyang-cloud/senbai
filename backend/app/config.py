@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # ---------- 大模型 API ----------
     llm_base_url: str = "https://api.deepseek.com/v1"
-    llm_api_key: str = ""
+    llm_api_key: str = "sk-61726c0c37b8430993baa26c389fa90c"
     llm_model: str = "deepseek-chat"
 
     # ---------- 爬虫 ----------
