@@ -101,8 +101,21 @@ def list_articles(
         select(UserIndustry.industry_id).where(UserIndustry.user_id == user.id)
     ).scalars().all()
 
+    # 如果用户没有选择关注的行业，返回所有资讯（不过滤）
     if not user_industries:
-        return {"items": [], "total": 0, "page": page}
+        total = db.execute(select(func.count(Article.id))).scalar()
+        rows = db.execute(
+            select(Article)
+            .order_by(desc(Article.published_at))
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        ).scalars().all()
+        return {
+            "items": [ArticleBrief.model_validate(a) for a in rows],
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
 
     # 按行业过滤 + 时间倒序
     total = db.execute(
