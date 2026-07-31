@@ -7,7 +7,7 @@
 工作流程：
 1. 接收爬虫返回的新文章列表
 2. 把标题+摘要（截断100字）打包成文本
-3. 一次 API 调用，让 AI 按行业分类、每行业挑 3-5 条大事
+3. 一次 API 调用，让 AI 按行业分类、每行业挑 5-8 条大事
 4. 解析 JSON，匹配回原始文章，存入 DailyDigest 表
 
 留口子设计：
@@ -43,7 +43,7 @@ def _get_client() -> OpenAI:
 
 # ========== Prompt 设计（尽量精简，省 Token）==========
 
-SYSTEM_PROMPT = """你是产业分析师。从资讯列表中为每个行业挑选3-5条大事并生成解读。
+SYSTEM_PROMPT = """你是产业分析师。从资讯列表中为每个行业挑选5-8条大事并生成解读。
 行业：半导体、新能源、人工智能、生物医药、消费电子、金融科技、航空航天、智能制造
 规则：只选重要资讯；某行业无重要资讯则返回空数组；title必须使用资讯原始标题；summary不超过50字(小白能听懂)；insights给1-2个观点，point 10-20字，description 50-100字。
 严格输出JSON(不要输出其他内容)：
@@ -152,7 +152,7 @@ def generate_daily_digest(
                 {"role": "user", "content": user_prompt},
             ],
             temperature=0.3,
-            max_tokens=3000,
+            max_tokens=5000,
         )
 
         raw_output = response.choices[0].message.content.strip()

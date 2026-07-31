@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.database import init_db, SessionLocal
 from app.config import settings
@@ -67,18 +67,19 @@ def init_data():
             logger.info(f"已有 {len(user_count)} 个用户，跳过创建管理员")
 
         # 确保额外用户存在（目前只有xiaoweining）
-        extra_users = [("xiaoweining", "123456")]
-        for uname, upwd in extra_users:
-            exists = db.execute(
-                select(User).where(User.username == uname)
-            ).scalar_one_or_none()
-            if not exists:
-                db.add(User(
-                    username=uname,
-                    hashed_password=hash_password(upwd),
-                ))
+        # 已移除：开放注册后不再预置额外用户
+
+        # 4. 数据库迁移：给 messages 表加 visibility + visible_to 字段
+        try:
+            db.execute(text("SELECT visibility FROM messages LIMIT 0"))
+        except Exception:
+            try:
+                db.execute(text("ALTER TABLE messages ADD COLUMN visibility VARCHAR(20) DEFAULT 'public'"))
+                db.execute(text("ALTER TABLE messages ADD COLUMN visible_to TEXT NULL"))
                 db.commit()
-                logger.info(f"已创建用户: {uname}")
+                logger.info("messages表迁移：已添加 visibility + visible_to 字段")
+            except Exception as e:
+                logger.warning(f"messages表迁移失败（可能字段已存在）: {e}")
     finally:
         db.close()
 

@@ -1,0 +1,48 @@
+<!-- pages/register/register.wxml - 注册页 -->
+<view class="register-page">
+  <view class="logo-area">
+    <view class="logo-icon">🌿</view>
+    <view class="logo-text">注册森柏</view>
+    <view class="logo-desc">创建你的专属资讯账号</view>
+  </view>
+
+  <view class="form-area">
+    <view class="input-group">
+      <input
+        class="input"
+        placeholder="用户名（至少2个字符）"
+        value="{{username}}"
+        bindinput="onUsernameInput"
+        placeholder-class="placeholder"
+      />
+    </view>
+    <view class="input-group">
+      <input
+        class="input"
+        placeholder="密码（至少4个字符）"
+        password="true"
+        value="{{password}}"
+        bindinput="onPasswordInput"
+        placeholder-class="placeholder"
+      />
+    </view>
+    <view class="input-group">
+      <input
+        class="input"
+        placeholder="确认密码"
+        password="true"
+        value="{{confirmPassword}}"
+        bindinput="onConfirmPasswordInput"
+        placeholder-class="placeholder"
+      />
+    </view>
+
+    <view class="btn-primary register-btn" bindtap="handleRegister">
+      {{loading ? '注册中...' : '注 册'}}
+    </view>
+
+    <view class="back-link" bindtap="goBack">
+      已有账号？返回登录
+    </view>
+  </view>
+</view>

@@ -1,0 +1,743 @@
+/* pages/lure/lure.wxss - 喵的路亚粮仓样式 V3 */
+
+.lure-page {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #1a5276;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* ========================================
+   海面场景
+   ======================================== */
+.ocean-scene {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;  /* C方案：允许收缩，收线圆环大时海面区让出空间 */
+}
+
+.sky {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 45%;
+  background: linear-gradient(180deg, #87ceeb 0%, #b0e0e6 50%, #e0f6ff 100%);
+}
+
+.sun {
+  position: absolute;
+  top: 60rpx;
+  right: 80rpx;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffacd, #ffd700);
+  box-shadow: 0 0 40rpx rgba(255, 215, 0, 0.6);
+}
+
+.mountains {
+  position: absolute;
+  bottom: 55%;
+  left: 0;
+  right: 0;
+  height: 80rpx;
+  background: linear-gradient(180deg, transparent, rgba(70, 130, 180, 0.3));
+  clip-path: polygon(0 100%, 10% 60%, 20% 80%, 30% 40%, 45% 70%, 55% 30%, 70% 65%, 85% 50%, 100% 75%, 100% 100%);
+}
+
+.sea {
+  position: absolute;
+  top: 45%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, #4a90b8 0%, #2e6e8e 40%, #1a4a6a 100%);
+  overflow: hidden;
+}
+
+.wave {
+  position: absolute;
+  left: -50%;
+  width: 200%;
+  height: 20rpx;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+}
+
+.wave1 { top: 10%; animation: waveMove 4s ease-in-out infinite; }
+.wave2 { top: 25%; animation: waveMove 5s ease-in-out infinite 0.5s; opacity: 0.7; }
+.wave3 { top: 40%; animation: waveMove 6s ease-in-out infinite 1s; opacity: 0.5; }
+
+@keyframes waveMove {
+  0%, 100% { transform: translateX(0) scale(1); }
+  50% { transform: translateX(-30rpx) scale(1.05); }
+}
+
+/* ========================================
+   鱼竿区域（V3：图片+SVG线+CSS旋转手柄）
+   ======================================== */
+.rod-area {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 65%;
+  pointer-events: none;
+}
+
+/* 路亚竿图片（AI生成，透明背景） */
+.rod-image {
+  position: absolute;
+  bottom: 0;
+  right: 20rpx;
+  width: 420rpx;
+  height: 560rpx;
+  transform: rotate(-12deg);
+  transform-origin: bottom right;
+  filter: drop-shadow(4rpx 8rpx 12rpx rgba(0, 0, 0, 0.35));
+}
+
+/* 鱼线SVG容器 */
+.fishing-line-svg {
+  position: absolute;
+  bottom: 60rpx;
+  right: 130rpx;
+  width: 60rpx;
+  height: 460rpx;
+  pointer-events: none;
+}
+
+/* 鱼线：抛投时的出线动画 */
+.line-cast {
+  stroke-dasharray: 350;
+  stroke-dashoffset: 350;
+  animation: lineSpoolOut 2s ease-out forwards;
+}
+
+@keyframes lineSpoolOut {
+  0%   { stroke-dashoffset: 350; opacity: 0.2; }
+  20%  { stroke-dashoffset: 280; opacity: 0.6; }
+  50%  { stroke-dashoffset: 150; opacity: 0.85; }
+  80%  { stroke-dashoffset: 40;  opacity: 0.75; }
+  100% { stroke-dashoffset: 0;   opacity: 0.7; }
+}
+
+/* 鱼线：收线阶段绷紧可见 */
+.line-reel {
+  opacity: 0;
+  animation: lineFadeIn 0.4s ease-out forwards;
+}
+
+@keyframes lineFadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: 0.65; }
+}
+
+/* 纺车轮手柄叠加层（盖在图片轮子位置） */
+.rod-reel-overlay {
+  position: absolute;
+  bottom: 100rpx;
+  right: 135rpx;
+  width: 70rpx;
+  height: 70rpx;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* 纺车轮旋转手柄 */
+.reel-handle {
+  position: absolute;
+  top: 50%;
+  left: 15%;
+  width: 70%;
+  height: 6rpx;
+  background: linear-gradient(90deg, #555, #888);
+  transform: translateY(-50%);
+  border-radius: 3rpx;
+  box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.4);
+}
+
+/* 手柄末端旋钮 */
+.reel-knob {
+  position: absolute;
+  top: 50%;
+  right: 5%;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ff8a65, #d84315);
+  transform: translateY(-50%);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.5);
+}
+
+.rod-reel-overlay.spinning {
+  animation: reelSpin 0.25s linear infinite;
+}
+
+@keyframes reelSpin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ========================================
+   饵飞行 + 抛投距离 + 庆祝动画
+   ======================================== */
+.lure-flying {
+  position: absolute;
+  top: 30%;
+  left: 30%;
+  animation: lureFly 2s ease-out forwards;
+}
+
+.lure-bait-img {
+  width: 60rpx;
+  height: 60rpx;
+}
+
+@keyframes lureFly {
+  0%   { transform: translate(0, 100rpx) scale(1); opacity: 1; }
+  40%  { transform: translate(-120rpx, -80rpx) scale(0.8); opacity: 1; }
+  70%  { transform: translate(-220rpx, -20rpx) scale(0.6); opacity: 0.8; }
+  100% { transform: translate(-280rpx, 40rpx) scale(0.4); opacity: 0.5; }
+}
+
+.distance-display {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  animation: distPop 0.3s ease-out;
+}
+
+.distance-num {
+  font-size: 80rpx;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.4);
+}
+
+.distance-unit {
+  font-size: 32rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-left: 8rpx;
+}
+
+@keyframes distPop {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.5); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+.catch-celebration {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  animation: catchBounce 0.6s ease-out;
+}
+
+.catch-fish-icon {
+  font-size: 100rpx;
+  display: block;
+}
+
+.catch-fish-name {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.5);
+  display: block;
+  margin-top: 12rpx;
+}
+
+@keyframes catchBounce {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.3); }
+  50%  { opacity: 1; transform: translateX(-50%) scale(1.2); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+/* ========================================
+   操作区
+   ======================================== */
+.action-area {
+  background: #0d3b54;
+  padding: 24rpx 32rpx 16rpx;
+  min-height: 180rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  flex-shrink: 0;  /* C方案：操作区不被压缩，海面区让出空间 */
+  overflow: hidden;
+}
+
+.bait-panel {
+  display: flex;
+  gap: 14rpx;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.bait-item {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+  border-radius: 16rpx;
+  padding: 10rpx 16rpx;
+  gap: 8rpx;
+  transition: all 0.2s;
+}
+
+.bait-item.selected {
+  background: rgba(45, 184, 77, 0.4);
+  border-color: #2db84d;
+  box-shadow: 0 0 16rpx rgba(45, 184, 77, 0.4);
+}
+
+.bait-item:active {
+  transform: scale(0.95);
+}
+
+.bait-img {
+  width: 50rpx;
+  height: 50rpx;
+  border-radius: 8rpx;
+}
+
+.bait-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.bait-name {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+.bait-target {
+  font-size: 18rpx;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.action-btn {
+  width: 80%;
+  height: 100rpx;
+  border-radius: 50rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #fff;
+}
+
+.action-btn::after {
+  border: none;
+}
+
+.btn-icon {
+  font-size: 36rpx;
+}
+
+.ready-btn {
+  background: linear-gradient(135deg, #2db84d, #1a8a38);
+  box-shadow: 0 4rpx 16rpx rgba(45, 184, 77, 0.4);
+}
+
+.ready-btn.active {
+  background: linear-gradient(135deg, #e67e22, #d35400);
+  animation: readyPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes readyPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 4rpx 16rpx rgba(230, 126, 34, 0.4); }
+  50%      { transform: scale(1.05); box-shadow: 0 4rpx 24rpx rgba(230, 126, 34, 0.6); }
+}
+
+.auto-land-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx 0;
+}
+
+.casting-anim {
+  display: flex;
+  gap: 12rpx;
+}
+
+.cast-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #3498db;
+  animation: castBounce 0.6s ease-in-out infinite;
+}
+
+.dot1 { animation-delay: 0s; }
+.dot2 { animation-delay: 0.15s; }
+.dot3 { animation-delay: 0.3s; }
+
+@keyframes castBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50%      { transform: translateY(-16rpx); opacity: 1; }
+}
+
+.auto-land-text {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ========================================
+   收线圆环（V3：大圆环，高容错，去掉百分比文字）
+   ======================================== */
+.reel-ring {
+  width: 520rpx;
+  height: 520rpx;
+  border-radius: 50%;
+  border: 10rpx solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 40rpx rgba(255, 255, 255, 0.05),
+              0 4rpx 20rpx rgba(0, 0, 0, 0.2);
+}
+
+.reel-progress-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.reel-pointer {
+  position: absolute;
+  top: -20rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 20rpx solid transparent;
+  border-right: 20rpx solid transparent;
+  border-bottom: 30rpx solid #2db84d;
+  filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.3));
+}
+
+.reel-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.reel-hint {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.3);
+}
+
+.reel-progress-bar {
+  position: absolute;
+  bottom: -50rpx;
+  left: 5%;
+  right: 5%;
+  height: 14rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 7rpx;
+  overflow: hidden;
+}
+
+.reel-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2db84d, #f1c40f);
+  border-radius: 7rpx;
+  transition: width 0.2s ease;
+}
+
+/* ========================================
+   刺鱼 + 结果区域
+   ======================================== */
+.hook-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  position: relative;
+}
+
+.hook-pulse {
+  position: absolute;
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 50%;
+  border: 4rpx solid #e74c3c;
+  animation: hookPulse 0.6s ease-in-out infinite;
+}
+
+@keyframes hookPulse {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.hook-icon {
+  font-size: 80rpx;
+  animation: hookShake 0.3s ease-in-out infinite;
+}
+
+@keyframes hookShake {
+  0%, 100% { transform: rotate(-10deg); }
+  50%      { transform: rotate(10deg); }
+}
+
+.hook-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #e74c3c;
+  text-shadow: 0 0 12rpx rgba(231, 76, 60, 0.6);
+}
+
+.result-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  animation: resultPop 0.4s ease-out;
+}
+
+@keyframes resultPop {
+  0%   { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.result-icon { font-size: 80rpx; }
+.result-text { font-size: 36rpx; font-weight: 700; }
+.result-zone.catch .result-text { color: #2db84d; }
+.result-zone.escape .result-text { color: #95a5a6; }
+.result-zone.fail .result-text { color: #e74c3c; }
+
+/* ========================================
+   状态提示区（最底部）
+   ======================================== */
+.status-bar {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 16rpx 32rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  text-align: center;
+  min-height: 70rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;  /* C方案：状态栏固定不压缩 */
+}
+
+.status-text {
+  color: #fff;
+  font-size: 26rpx;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+/* ========================================
+   左下角鱼框 & 鱼库
+   ======================================== */
+.fish-box-btn {
+  position: fixed;
+  bottom: 200rpx;
+  left: 24rpx;
+  width: 90rpx;
+  height: 90rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2);
+  z-index: 100;
+}
+
+.fish-box-btn:active {
+  transform: scale(0.92);
+}
+
+.fish-box-icon { font-size: 44rpx; }
+
+.fish-box-badge {
+  position: absolute;
+  top: -6rpx;
+  right: -6rpx;
+  min-width: 36rpx;
+  height: 36rpx;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 600;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8rpx;
+}
+
+.stock-display {
+  position: fixed;
+  top: 20rpx;
+  right: 24rpx;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 30rpx;
+  padding: 8rpx 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  z-index: 100;
+}
+
+.stock-icon { font-size: 28rpx; }
+.stock-num { font-size: 24rpx; color: #fff; font-weight: 500; }
+
+/* ========================================
+   弹窗
+   ======================================== */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 24rpx;
+  width: 600rpx;
+  max-height: 70vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlide 0.3s ease-out;
+}
+
+@keyframes modalSlide {
+  0%   { opacity: 0; transform: translateY(40rpx) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.fish-box-modal { padding: 0; }
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.modal-title { font-size: 34rpx; font-weight: 600; color: #333; }
+.modal-close { font-size: 36rpx; color: #999; padding: 8rpx; }
+
+.fish-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16rpx 32rpx;
+  max-height: 50vh;
+}
+
+.fish-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+  gap: 16rpx;
+}
+
+.fish-item-icon { font-size: 44rpx; }
+.fish-item-info { flex: 1; }
+.fish-item-name { font-size: 30rpx; font-weight: 500; color: #333; display: block; }
+.fish-item-meta { font-size: 22rpx; color: #999; display: block; margin-top: 4rpx; }
+
+.fish-empty { padding: 80rpx 0; text-align: center; }
+.fish-empty-text { color: #ccc; font-size: 28rpx; white-space: pre-line; }
+
+.feed-cat-btn {
+  margin: 24rpx 32rpx;
+  height: 90rpx;
+  background: linear-gradient(135deg, #2db84d, #1a8a38);
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 45rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feed-cat-btn::after { border: none; }
+
+.feed-modal {
+  padding: 48rpx 40rpx;
+  align-items: center;
+  text-align: center;
+}
+
+.feed-cat-img {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
+  animation: catHappy 0.6s ease-out;
+}
+
+@keyframes catHappy {
+  0%   { transform: scale(0.5) rotate(-20deg); }
+  50%  { transform: scale(1.15) rotate(10deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.feed-cat-avatar { width: 100%; height: 100%; }
+
+.feed-modal-text {
+  font-size: 30rpx;
+  color: #333;
+  line-height: 1.8;
+  white-space: pre-line;
+  margin-bottom: 32rpx;
+}
+
+.feed-modal-btn {
+  width: 100%;
+  height: 80rpx;
+  background: #2db84d;
+  color: #fff;
+  font-size: 30rpx;
+  border-radius: 40rpx;
+  border: none;
+}
+
+.feed-modal-btn::after { border: none; }

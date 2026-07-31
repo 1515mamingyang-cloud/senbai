@@ -10,12 +10,23 @@
     </view>
   </view>
 
+  <!-- 加载中 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 加载失败提示 -->
+  <view class="load-error" wx:elif="{{loadError}}">
+    <text class="error-text">{{loadError}}</text>
+    <view class="retry-btn" bindtap="loadData">重试</view>
+  </view>
+
   <!-- 行业选择 -->
-  <view class="section" wx:if="{{!loading}}">
+  <view class="section" wx:elif="{{!loading}}">
     <view class="section-title">关注行业</view>
     <text class="section-hint">选择你感兴趣的产业，系统将为你推送相关资讯</text>
 
-    <view class="industry-grid">
+    <view class="industry-grid" wx:if="{{industries.length > 0}}">
       <view
         class="industry-item {{item.checked ? 'checked' : ''}}"
         wx:for="{{industries}}"
@@ -28,14 +39,13 @@
       </view>
     </view>
 
+    <view class="empty-hint" wx:else>
+      <text>暂无可选行业，请下拉刷新重试</text>
+    </view>
+
     <view class="btn-primary save-btn" bindtap="onSave">
       {{saving ? '保存中...' : '保存设置'}}
     </view>
-  </view>
-
-  <!-- 加载中 -->
-  <view class="loading" wx:if="{{loading}}">
-    <text>加载中...</text>
   </view>
 
   <!-- 退出登录 -->

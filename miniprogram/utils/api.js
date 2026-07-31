@@ -1,8 +1,12 @@
 // utils/api.js - API 请求封装
 // 统一处理：callContainer 内网调用、token 注入、错误提示
-// 使用 wx.cloud.callContainer 走内网，无需配置服务器域名
+// 优先使用 wx.cloud.callContainer 走内网，失败时降级到 wx.request 公网调用
 
-const app = getApp()
+// 公网降级 URL（callContainer 不可用时使用）
+const FALLBACK_BASE_URL = 'https://senbai-289444-10-1460976929.sh.run.tcloudbase.com'
+
+// 注意：不能在模块加载时调用 getApp()，因为此时 App() 可能尚未注册
+// 延迟到每次请求时获取，确保 app 已就绪
 
 /**
  * 发起请求（通过云托管内网 callContainer）
@@ -13,18 +17,23 @@ const app = getApp()
  */
 function request(url, method = 'GET', data = {}) {
   const token = wx.getStorageSync('token')
+  const app = getApp()
+  const cloudEnv = (app && app.globalData) ? app.globalData.cloudEnv : 'prod-d8g8lkp1f325162b9'
+  const serviceName = (app && app.globalData) ? app.globalData.serviceName : 'senbai'
+  console.log('[API Request]', { url, method, data, hasToken: !!token, cloudEnv, serviceName })
   return new Promise((resolve, reject) => {
     wx.cloud.callContainer({
-      config: { env: app.globalData.cloudEnv },
+      config: { env: cloudEnv },
       path: url,
       method: method,
       data: data,
       header: {
         'Content-Type': 'application/json',
-        'X-WX-SERVICE': app.globalData.serviceName,
+        'X-WX-SERVICE': serviceName,
         'Authorization': token ? 'Bearer ' + token : ''
       },
       success(res) {
+        console.log('[API Response]', { url, statusCode: res.statusCode, data: res.data })
         if (res.statusCode === 200) {
           resolve(res.data)
         } else if (res.statusCode === 401) {
@@ -33,15 +42,73 @@ function request(url, method = 'GET', data = {}) {
           wx.redirectTo({ url: '/pages/login/login' })
           reject(new Error('登录已过期'))
         } else {
-          wx.showToast({ title: res.data.detail || '请求失败', icon: 'none' })
-          reject(new Error(res.data.detail || '请求失败'))
+          // 安全提取错误信息（res.data 可能是字符串、null 或非标准格式）
+          let errMsg = '请求失败'
+          if (res.data) {
+            if (typeof res.data === 'string') {
+              errMsg = res.data
+            } else if (res.data.detail) {
+              errMsg = typeof res.data.detail === 'string' ? res.data.detail : JSON.stringify(res.data.detail)
+            } else {
+              errMsg = JSON.stringify(res.data)
+            }
+          }
+          console.error('[API Error]', { url, statusCode: res.statusCode, errMsg, rawData: res.data })
+          wx.showToast({ title: errMsg, icon: 'none', duration: 3000 })
+          reject(new Error(errMsg))
         }
       },
       fail(err) {
-        wx.showToast({ title: '网络异常', icon: 'none' })
-        reject(err)
+        console.error('[API callContainer Fail]', { url, method, err })
+        // callContainer 失败，降级到公网 wx.request
+        console.log('[API] 降级到公网请求:', FALLBACK_BASE_URL + url)
+        _requestFallback(url, method, data, token, resolve, reject)
       }
     })
+  })
+}
+
+/**
+ * 公网降级请求（callContainer 不可用时使用）
+ */
+function _requestFallback(url, method, data, token, resolve, reject) {
+  wx.request({
+    url: FALLBACK_BASE_URL + url,
+    method: method,
+    data: data,
+    header: {
+      'Content-Type': 'application/json',
+      'Authorization': token ? 'Bearer ' + token : ''
+    },
+    success(res) {
+      console.log('[API Fallback Response]', { url, statusCode: res.statusCode, data: res.data })
+      if (res.statusCode === 200) {
+        resolve(res.data)
+      } else if (res.statusCode === 401) {
+        wx.removeStorageSync('token')
+        wx.redirectTo({ url: '/pages/login/login' })
+        reject(new Error('登录已过期'))
+      } else {
+        let errMsg = '请求失败'
+        if (res.data) {
+          if (typeof res.data === 'string') {
+            errMsg = res.data
+          } else if (res.data.detail) {
+            errMsg = typeof res.data.detail === 'string' ? res.data.detail : JSON.stringify(res.data.detail)
+          } else {
+            errMsg = JSON.stringify(res.data)
+          }
+        }
+        console.error('[API Fallback Error]', { url, statusCode: res.statusCode, errMsg, rawData: res.data })
+        wx.showToast({ title: errMsg, icon: 'none', duration: 3000 })
+        reject(new Error(errMsg))
+      }
+    },
+    fail(err) {
+      console.error('[API Fallback Fail]', { url, method, err })
+      wx.showToast({ title: '网络异常: ' + (err.errMsg || ''), icon: 'none', duration: 3000 })
+      reject(err)
+    }
   })
 }
 
@@ -50,6 +117,11 @@ function request(url, method = 'GET', data = {}) {
 // 登录
 function login(username, password) {
   return request('/api/auth/login', 'POST', { username, password })
+}
+
+// 注册
+function register(username, password) {
+  return request('/api/auth/register', 'POST', { username, password })
 }
 
 // 获取资讯流
@@ -113,14 +185,19 @@ function getMessages(page = 1) {
   return request(`/api/messages?page=${page}`)
 }
 
-// 发送留言
-function sendMessage(content) {
-  return request('/api/messages', 'POST', { content })
+// 发送留言（支持定向发布）
+function sendMessage(content, visibility, visibleTo) {
+  return request('/api/messages', 'POST', {
+    content,
+    visibility: visibility || 'public',
+    visible_to: visibleTo || ''
+  })
 }
 
 module.exports = {
   request,
   login,
+  register,
   getArticles,
   getArticleDetail,
   feedback,

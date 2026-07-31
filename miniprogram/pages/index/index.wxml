@@ -14,22 +14,13 @@
         <text class="header-greeting">你好，{{username}}</text>
         <text class="header-sub">森柏助手为你服务</text>
       </view>
-
-      <!-- 获取精选按钮 -->
-      <button
-        class="refresh-btn {{refreshing ? 'refreshing' : ''}}"
-        bindtap="onTapRefresh"
-        disabled="{{refreshing}}"
-      >
-        {{refreshing ? '获取中' : '获取精选'}}
-      </button>
     </view>
 
     <!-- 互动按钮 -->
     <view class="cat-actions">
       <view class="cat-action-btn" bindtap="onFeedCat">
         <text class="cat-action-icon">🐟</text>
-        <text class="cat-action-label">投喂</text>
+        <text class="cat-action-label">投喂{{fishStock > 0 ? '(' + fishStock + ')' : ''}}</text>
       </view>
       <view class="cat-action-btn" bindtap="onPetCat">
         <text class="cat-action-icon">🐾</text>
@@ -46,12 +37,27 @@
       {{catBubbleText}}
     </view>
 
+    <!-- 路亚粮仓入口 -->
+    <view class="lure-entry" bindtap="onTapLure">
+      <text class="lure-entry-icon">🎣</text>
+      <text class="lure-entry-text">喵的路亚粮仓</text>
+      <text class="lure-entry-arrow">›</text>
+    </view>
+
     <!-- 日期 -->
-    <text class="header-date">{{digestDate ? digestDate + ' 产业精选' : '暂无精选，点击获取'}}</text>
+    <text class="header-date" wx:if="{{digestDate}}">{{digestDate}} 产业精选</text>
   </view>
 
-  <!-- 精选列表（按行业分组） -->
-  <block wx:if="{{industries.length > 0}}">
+  <!-- 未选行业：提示去选 -->
+  <view class="empty-select" wx:if="{{!hasSelectedIndustries && !loading}}">
+    <text class="empty-select-icon">📋</text>
+    <text class="empty-select-title">请先选择你感兴趣的行业</text>
+    <text class="empty-select-desc">选择后，森柏会为你展示对应领域的每日精选</text>
+    <view class="empty-select-btn" bindtap="goSelectIndustries">去选行业</view>
+  </view>
+
+  <!-- 已选行业：精选列表（按行业分组） -->
+  <block wx:if="{{hasSelectedIndustries && industries.length > 0}}">
     <view class="industry-section" wx:for="{{industries}}" wx:key="industry_id">
       <!-- 行业标题 -->
       <view class="industry-header">
@@ -93,10 +99,10 @@
     </view>
   </block>
 
-  <!-- 空状态 -->
-  <view class="empty" wx:elif="{{!loading}}">
+  <!-- 已选行业但暂无精选 -->
+  <view class="empty" wx:if="{{hasSelectedIndustries && industries.length === 0 && !loading}}">
     <text>暂无精选资讯</text>
-    <text class="empty-sub">点击上方按钮手动获取，或等待每天8点自动更新</text>
+    <text class="empty-sub">每天8点自动更新，请稍后查看</text>
   </view>
 
   <!-- 加载状态 -->

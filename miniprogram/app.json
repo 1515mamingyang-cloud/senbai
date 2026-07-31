@@ -5,7 +5,9 @@
     "pages/favorites/favorites",
     "pages/profile/profile",
     "pages/login/login",
-    "pages/messages/messages"
+    "pages/register/register",
+    "pages/messages/messages",
+    "pages/lure/lure"
   ],
   "window": {
     "navigationBarBackgroundColor": "#2db84d",

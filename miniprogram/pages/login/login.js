@@ -36,5 +36,10 @@ Page({
     } finally {
       this.setData({ loading: false })
     }
+  },
+
+  // 跳转注册页
+  goRegister() {
+    wx.navigateTo({ url: '/pages/register/register' })
   }
 })

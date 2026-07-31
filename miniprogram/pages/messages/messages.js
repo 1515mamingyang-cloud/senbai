@@ -1,4 +1,4 @@
-// pages/messages/messages.js - 留言板：公共留言，所有用户互通
+// pages/messages/messages.js - 留言板：公开发布 + 定向发布
 const api = require('../../utils/api.js')
 
 Page({
@@ -9,7 +9,11 @@ Page({
     sending: false,
     page: 1,
     hasMore: true,
-    total: 0
+    total: 0,
+    // 定向发布
+    visibility: 'public',  // public | targeted
+    visibleTo: '',         // 定向发布的用户名（逗号分隔）
+    showTargetInput: false  // 是否显示用户名输入框
   },
 
   onLoad() {
@@ -28,7 +32,9 @@ Page({
     this.setData({ loading: true })
 
     try {
+      console.log('[Messages] 加载留言, page=', page)
       const res = await api.getMessages(page)
+      console.log('[Messages] 加载结果:', res)
       const newMessages = res.items || []
       const messages = reset ? newMessages : [...this.data.messages, ...newMessages]
 
@@ -39,7 +45,7 @@ Page({
         total: res.total
       })
     } catch (err) {
-      console.error('加载留言失败:', err)
+      console.error('[Messages] 加载留言失败:', err)
     } finally {
       this.setData({ loading: false })
     }
@@ -57,6 +63,20 @@ Page({
     this.setData({ inputContent: e.detail.value })
   },
 
+  // 输入定向用户名
+  onVisibleToInput(e) {
+    this.setData({ visibleTo: e.detail.value })
+  },
+
+  // 切换公开/定向
+  onToggleVisibility(e) {
+    const vis = e.currentTarget.dataset.vis
+    this.setData({
+      visibility: vis,
+      showTargetInput: vis === 'targeted'
+    })
+  },
+
   // 发送留言
   async onSend() {
     const content = this.data.inputContent.trim()
@@ -65,17 +85,30 @@ Page({
       return
     }
     if (this.data.sending) return
+
+    // 定向发布校验
+    if (this.data.visibility === 'targeted') {
+      const targets = this.data.visibleTo.trim()
+      if (!targets) {
+        wx.showToast({ title: '请输入至少一个用户名', icon: 'none' })
+        return
+      }
+    }
+
     this.setData({ sending: true })
 
     try {
-      await api.sendMessage(content)
-      this.setData({ inputContent: '' })
+      console.log('[Messages] 发送留言:', content, this.data.visibility, this.data.visibleTo)
+      await api.sendMessage(content, this.data.visibility, this.data.visibleTo)
+      this.setData({ inputContent: '', visibleTo: '' })
       wx.showToast({ title: '留言成功', icon: 'success' })
+      // 重置为公开发布
+      this.setData({ visibility: 'public', showTargetInput: false })
       // 刷新留言列表
       this.loadMessages(true)
     } catch (err) {
-      console.error('发送留言失败:', err)
-      wx.showToast({ title: '发送失败', icon: 'none' })
+      console.error('[Messages] 发送留言失败:', err)
+      // api.js 已弹出错误提示，这里不再重复弹窗
     } finally {
       this.setData({ sending: false })
     }

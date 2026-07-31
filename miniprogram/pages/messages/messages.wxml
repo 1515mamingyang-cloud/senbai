@@ -6,7 +6,10 @@
     <view class="message-item {{item.is_mine ? 'mine' : ''}}" wx:for="{{messages}}" wx:key="id">
       <view class="message-header">
         <text class="message-username">{{item.username}}</text>
-        <text class="message-time">{{item.created_at}}</text>
+        <view class="header-right">
+          <text class="visibility-badge" wx:if="{{item.visibility === 'targeted'}}">定向</text>
+          <text class="message-time">{{item.created_at}}</text>
+        </view>
       </view>
       <view class="message-content">{{item.content}}</view>
     </view>
@@ -28,18 +31,46 @@
 
   <!-- 底部输入栏 -->
   <view class="input-bar">
-    <input
-      class="input-field"
-      placeholder="写点什么..."
-      value="{{inputContent}}"
-      bindinput="onInput"
-      confirm-type="send"
-      bindconfirm="onSend"
-      maxlength="500"
-    />
-    <button class="send-btn" bindtap="onSend" disabled="{{!inputContent || sending}}">
-      {{sending ? '...' : '发送'}}
-    </button>
+    <!-- 公开/定向切换 -->
+    <view class="visibility-toggle">
+      <view
+        class="vis-btn {{visibility === 'public' ? 'active' : ''}}"
+        data-vis="public"
+        bindtap="onToggleVisibility"
+      >公开</view>
+      <view
+        class="vis-btn {{visibility === 'targeted' ? 'active' : ''}}"
+        data-vis="targeted"
+        bindtap="onToggleVisibility"
+      >定向</view>
+    </view>
+
+    <!-- 定向发布：用户名输入 -->
+    <view class="target-input-wrap" wx:if="{{showTargetInput}}">
+      <input
+        class="target-input"
+        placeholder="输入用户名，多个用逗号分隔"
+        value="{{visibleTo}}"
+        bindinput="onVisibleToInput"
+        placeholder-class="placeholder"
+      />
+    </view>
+
+    <!-- 留言输入 + 发送 -->
+    <view class="input-row">
+      <input
+        class="input-field"
+        placeholder="写点什么..."
+        value="{{inputContent}}"
+        bindinput="onInput"
+        confirm-type="send"
+        bindconfirm="onSend"
+        maxlength="500"
+      />
+      <button class="send-btn" bindtap="onSend" disabled="{{!inputContent || sending}}">
+        {{sending ? '...' : '发送'}}
+      </button>
+    </view>
   </view>
 
 </view>

@@ -2,7 +2,7 @@
 .messages-page {
   min-height: 100vh;
   background: #f5f7f5;
-  padding-bottom: 120rpx;
+  padding-bottom: 280rpx;
 }
 
 /* 留言列表 */
@@ -30,6 +30,12 @@
   margin-bottom: 12rpx;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
 .message-username {
   font-size: 26rpx;
   font-weight: 600;
@@ -38,6 +44,14 @@
 
 .message-item.mine .message-username {
   color: #ff6b35;
+}
+
+.visibility-badge {
+  font-size: 18rpx;
+  color: #fff;
+  background: #ff9800;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
 }
 
 .message-time {
@@ -80,13 +94,55 @@
   bottom: 0;
   left: 0;
   right: 0;
-  display: flex;
-  align-items: center;
   background: #fff;
   padding: 16rpx 24rpx;
   border-top: 1rpx solid #eee;
   box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.06);
   z-index: 100;
+}
+
+/* 公开/定向切换 */
+.visibility-toggle {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.vis-btn {
+  font-size: 24rpx;
+  padding: 6rpx 24rpx;
+  border-radius: 20rpx;
+  background: #f0f0f0;
+  color: #666;
+}
+
+.vis-btn.active {
+  background: #2db84d;
+  color: #fff;
+}
+
+/* 定向发布用户名输入 */
+.target-input-wrap {
+  margin-bottom: 12rpx;
+}
+
+.target-input {
+  background: #fff8e1;
+  border: 2rpx solid #ffe082;
+  border-radius: 12rpx;
+  padding: 12rpx 24rpx;
+  font-size: 26rpx;
+  height: 64rpx;
+}
+
+.placeholder {
+  color: #ccc;
+}
+
+/* 留言输入行 */
+.input-row {
+  display: flex;
+  align-items: center;
 }
 
 .input-field {

@@ -1,0 +1,217 @@
+<!-- pages/lure/lure.wxml - 喵的路亚粮仓 V3 -->
+<view class="lure-page" catchtouchmove="noop">
+
+  <!-- ===== 海面场景 ===== -->
+  <view class="ocean-scene">
+    <!-- 天空 -->
+    <view class="sky"></view>
+    <!-- 太阳 -->
+    <view class="sun"></view>
+    <!-- 远山 -->
+    <view class="mountains"></view>
+    <!-- 海面 -->
+    <view class="sea">
+      <view class="wave wave1"></view>
+      <view class="wave wave2"></view>
+      <view class="wave wave3"></view>
+    </view>
+
+    <!-- 路亚竿区域（图片+SVG鱼线+旋转的纺车轮手柄） -->
+    <view class="rod-area">
+      <!-- 鱼线：SVG路径 + 渐变透明度，飞行时变长，收线时绷紧 -->
+      <svg class="fishing-line-svg"
+           wx:if="{{state !== 'idle'}}"
+           viewBox="0 0 100 400"
+           preserveAspectRatio="none">
+        <!-- 抛投阶段：出线动画 -->
+        <line wx:if="{{state === 'flying' || state === 'ready'}}"
+              class="line-cast"
+              x1="100" y1="40" x2="100" y2="380"
+              stroke="rgba(255,255,255,0.8)"
+              stroke-width="1.5"
+              stroke-linecap="round" />
+        <!-- 收线阶段：绷紧鱼线（从竿尖到水面） -->
+        <line wx:if="{{state === 'reeling' || state === 'bite'}}"
+              class="line-reel"
+              x1="100" y1="40" x2="100" y2="360"
+              stroke="rgba(255,255,255,0.6)"
+              stroke-width="1.5"
+              stroke-linecap="round" />
+      </svg>
+
+      <!-- 路亚竿图片（半写实半卡通，AI生成） -->
+      <image class="rod-image" src="/images/fishing_rod.png" mode="aspectFit"></image>
+
+      <!-- 纺车轮手柄（CSS叠加在图片轮子上方，旋转动画） -->
+      <view class="rod-reel-overlay {{reelSpinning ? 'spinning' : ''}}">
+        <view class="reel-handle"></view>
+        <view class="reel-knob"></view>
+      </view>
+    </view>
+
+    <!-- 饵飞行动画 -->
+    <view class="lure-flying" wx:if="{{state === 'flying'}}">
+      <image class="lure-bait-img" src="{{selectedBait.img}}" mode="aspectFit"></image>
+    </view>
+
+    <!-- 抛投距离显示 -->
+    <view class="distance-display" wx:if="{{state === 'flying'}}">
+      <text class="distance-num">{{castDistance}}</text>
+      <text class="distance-unit">米</text>
+    </view>
+
+    <!-- 钓到鱼动画 -->
+    <view class="catch-celebration" wx:if="{{showCatchAnim}}">
+      <text class="catch-fish-icon">{{lastCatch.icon}}</text>
+      <text class="catch-fish-name">{{lastCatch.name}} {{lastCatch.weight}}斤</text>
+    </view>
+  </view>
+
+  <!-- ===== 操作区（上移，防误触） ===== -->
+  <view class="action-area">
+
+    <!-- idle: 鱼饵选择面板 -->
+    <view class="bait-panel" wx:if="{{state === 'idle'}}">
+      <view
+        class="bait-item {{selectedBaitId === item.id ? 'selected' : ''}}"
+        wx:for="{{baits}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="selectBait"
+      >
+        <image class="bait-img" src="{{item.img}}" mode="aspectFit"></image>
+        <view class="bait-info">
+          <text class="bait-name">{{item.name}}</text>
+          <text class="bait-target">-> {{item.fish}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- idle+已选饵 / ready: 准备按钮 -->
+    <button
+      wx:if="{{(state === 'idle' && selectedBait) || state === 'ready'}}"
+      class="action-btn ready-btn {{state === 'ready' ? 'active' : ''}}"
+      catchtouchstart="onReadyStart"
+      catchtouchend="onReadyEnd"
+      catchtouchcancel="onReadyEnd"
+    >
+      <text class="btn-icon">{{state === 'ready' ? '⏳' : '🎣'}}</text>
+      <text>{{state === 'ready' ? '保持按住！甩手机！' : '按住准备 · 甩手机抛饵'}}</text>
+    </button>
+
+    <!-- flying: 自动落水提示（无按钮） -->
+    <view wx:if="{{state === 'flying'}}" class="auto-land-hint">
+      <view class="casting-anim">
+        <view class="cast-dot dot1"></view>
+        <view class="cast-dot dot2"></view>
+        <view class="cast-dot dot3"></view>
+      </view>
+      <text class="auto-land-text">饵飞行中... 即将落水</text>
+    </view>
+
+    <!-- reeling: 收线圆环（大圆环，整个区域都能画圈） -->
+    <view
+      wx:if="{{state === 'reeling'}}"
+      class="reel-ring"
+      catchtouchstart="onReelStart"
+      catchtouchmove="onReelMove"
+      catchtouchend="onReelEnd"
+    >
+      <view class="reel-progress-ring" style="transform: rotate({{reelAngle}}deg);">
+        <view class="reel-pointer"></view>
+      </view>
+      <view class="reel-center">
+        <text class="reel-hint">在圆内画圈收线</text>
+      </view>
+      <view class="reel-progress-bar">
+        <view class="reel-progress-fill" style="width: {{reelProgress}}%;"></view>
+      </view>
+    </view>
+
+    <!-- bite: 刺鱼提示 -->
+    <view wx:if="{{state === 'bite'}}" class="hook-zone">
+      <view class="hook-pulse"></view>
+      <text class="hook-icon">🗡️</text>
+      <text class="hook-text">猛抬手机！</text>
+    </view>
+
+    <!-- catch: 钓到鱼 -->
+    <view wx:if="{{state === 'catch'}}" class="result-zone catch">
+      <text class="result-icon">🎉</text>
+      <text class="result-text">收获！</text>
+    </view>
+
+    <!-- escape: 鱼跑了 -->
+    <view wx:if="{{state === 'escape'}}" class="result-zone escape">
+      <text class="result-icon">💨</text>
+      <text class="result-text">跑了...</text>
+    </view>
+
+    <!-- fail: 炸线 -->
+    <view wx:if="{{state === 'fail'}}" class="result-zone fail">
+      <text class="result-icon">🌀</text>
+      <text class="result-text">炸线了</text>
+    </view>
+  </view>
+
+  <!-- ===== 状态提示区（移到底部） ===== -->
+  <view class="status-bar">
+    <text class="status-text">{{statusText}}</text>
+  </view>
+
+  <!-- ===== 左下角鱼框 ===== -->
+  <view class="fish-box-btn" bindtap="toggleFishBox">
+    <text class="fish-box-icon">🧺</text>
+    <text class="fish-box-badge" wx:if="{{caughtFish.length > 0}}">{{caughtFish.length}}</text>
+  </view>
+
+  <!-- 鱼库数量显示 -->
+  <view class="stock-display">
+    <text class="stock-icon">🐟</text>
+    <text class="stock-num">鱼库: {{fishStock}}</text>
+  </view>
+
+  <!-- ===== 鱼框弹窗 ===== -->
+  <view class="modal-mask" wx:if="{{showFishBox}}" bindtap="closeFishBox">
+    <view class="modal-content fish-box-modal" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">鱼获框</text>
+        <text class="modal-close" bindtap="closeFishBox">✕</text>
+      </view>
+
+      <view class="fish-list" wx:if="{{caughtFish.length > 0}}">
+        <view class="fish-item" wx:for="{{caughtFish}}" wx:key="id">
+          <text class="fish-item-icon">{{item.icon}}</text>
+          <view class="fish-item-info">
+            <text class="fish-item-name">{{item.name}}</text>
+            <text class="fish-item-meta">{{item.weight}}斤 · {{item.bait}} · {{item.time}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="fish-empty" wx:else>
+        <text class="fish-empty-text">还没钓到鱼呢\n去抛一竿试试！</text>
+      </view>
+
+      <button
+        wx:if="{{caughtFish.length > 0}}"
+        class="feed-cat-btn"
+        bindtap="feedAllToCat"
+      >
+        🐱 一键喂给小猫（{{caughtFish.length}}条）
+      </button>
+    </view>
+  </view>
+
+  <!-- ===== 喂猫成功弹窗 ===== -->
+  <view class="modal-mask" wx:if="{{showFeedModal}}" bindtap="closeFeedModal">
+    <view class="modal-content feed-modal" catchtap="noop">
+      <view class="feed-cat-img">
+        <image class="feed-cat-avatar" src="/images/cat_avatar.png" mode="aspectFill"></image>
+      </view>
+      <text class="feed-modal-text">{{feedResult}}</text>
+      <button class="feed-modal-btn" bindtap="closeFeedModal">喵~</button>
+    </view>
+  </view>
+
+</view>

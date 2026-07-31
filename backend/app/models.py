@@ -124,11 +124,13 @@ class DailyDigest(Base):
 
 
 class Message(Base):
-    """留言板：所有用户共享的公共留言，异步互通"""
+    """留言板：支持公开发布和定向发布"""
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), comment="发送者ID")
     username = Column(String(50), comment="发送者用户名（冗余存储，避免连表查询）")
     content = Column(String(500), comment="留言内容")
+    visibility = Column(String(20), default="public", comment="public=公开发布, targeted=定向发布")
+    visible_to = Column(Text, nullable=True, comment="定向发布的可见用户名JSON数组，如[\"alice\",\"bob\"]")
     created_at = Column(DateTime, default=datetime.utcnow)

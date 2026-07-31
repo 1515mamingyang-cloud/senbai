@@ -20,51 +20,98 @@ const PET_RESPONSES = [
   '喵~你的手好温暖~'
 ]
 
+// 没鱼时的提示
+const NO_FISH_RESPONSES = [
+  '喵...鱼库空了，去钓鱼吧！',
+  '喵呜~森柏好饿，去路亚粮仓钓几条嘛~',
+  '蹭蹭~没有鱼了，主人去钓鱼好不好？'
+]
+
 Page({
   data: {
     digestDate: '',
     industries: [],
     loading: false,
-    refreshing: false,
     username: '',
     // 小猫互动
     catAnimating: false,
     catBubbleText: '',
-    catBubbleShow: false
+    catBubbleShow: false,
+    // 鱼库存
+    fishStock: 10,
+    // 用户已选行业
+    selectedIndustryIds: [],
+    hasSelectedIndustries: false
   },
 
   onLoad() {
     const username = wx.getStorageSync('username') || '用户'
     this.setData({ username })
+    this._loadFishStock()
   },
 
   onShow() {
-    this.loadDigest()
+    // 检查用户已选行业，再决定加载哪些内容
+    this._checkIndustriesAndLoad()
+    // 从路亚页面返回时刷新鱼库存
+    this._loadFishStock()
   },
 
   // 下拉刷新
   onPullDownRefresh() {
-    this.loadDigest().then(() => {
+    this._checkIndustriesAndLoad().then(() => {
       wx.stopPullDownRefresh()
     })
   },
 
-  // 加载每日精选
+  // 检查用户已选行业 → 决定加载
+  async _checkIndustriesAndLoad() {
+    try {
+      const myIndustries = await api.getMyIndustries()
+      const ids = (myIndustries || []).map(i => i.id)
+      const hasSelected = ids.length > 0
+      this.setData({
+        selectedIndustryIds: ids,
+        hasSelectedIndustries: hasSelected
+      })
+      if (hasSelected) {
+        this.loadDigest()
+      } else {
+        // 没选行业，清空内容
+        this.setData({ industries: [], digestDate: '' })
+      }
+    } catch (err) {
+      console.error('检查行业失败:', err)
+      // 可能未登录，不影响
+    }
+  },
+
+  // 加载每日精选（只显示用户选了的行业）
   async loadDigest() {
     if (this.data.loading) return
     this.setData({ loading: true })
 
     try {
       const res = await api.getDigest()
+      // 过滤：只显示用户选了的行业
+      const selectedIds = this.data.selectedIndustryIds
+      const filtered = (res.industries || []).filter(g =>
+        selectedIds.includes(g.industry_id)
+      )
       this.setData({
         digestDate: res.date || '',
-        industries: res.industries || []
+        industries: filtered
       })
     } catch (err) {
       console.error('加载精选失败:', err)
     } finally {
       this.setData({ loading: false })
     }
+  },
+
+  // 跳转到行业选择页（我的页面）
+  goSelectIndustries() {
+    wx.switchTab({ url: '/pages/profile/profile' })
   },
 
   // 点击精选卡片 → 跳转详情页
@@ -82,8 +129,40 @@ Page({
     })
   },
 
+  // 点击路亚粮仓 → 跳转路亚游戏
+  onTapLure() {
+    wx.navigateTo({
+      url: '/pages/lure/lure'
+    })
+  },
+
+  // 读取鱼库存
+  _loadFishStock() {
+    const stock = wx.getStorageSync('fishStock')
+    this.setData({ fishStock: stock !== '' && stock !== undefined ? stock : 10 })
+    if (stock === '' || stock === undefined) {
+      wx.setStorageSync('fishStock', 10)
+    }
+  },
+
   // 投喂小猫
   onFeedCat() {
+    // 检查鱼库存
+    if (this.data.fishStock <= 0) {
+      const text = NO_FISH_RESPONSES[Math.floor(Math.random() * NO_FISH_RESPONSES.length)]
+      this.setData({
+        catAnimating: true,
+        catBubbleText: text,
+        catBubbleShow: true
+      })
+      setTimeout(() => { this.setData({ catAnimating: false }) }, 600)
+      setTimeout(() => { this.setData({ catBubbleShow: false }) }, 2800)
+      return
+    }
+    // 消耗一条鱼
+    const newStock = this.data.fishStock - 1
+    wx.setStorageSync('fishStock', newStock)
+    this.setData({ fishStock: newStock })
     this._interactWithCat(FEED_RESPONSES)
   },
 
@@ -116,47 +195,5 @@ Page({
     setTimeout(() => {
       this.setData({ catBubbleShow: false })
     }, 2500)
-  },
-
-  // 手动刷新：爬取+AI总结（异步）
-  async onTapRefresh() {
-    if (this.data.refreshing) return
-    this.setData({ refreshing: true })
-    wx.showLoading({ title: '开始获取...', mask: true })
-
-    try {
-      await api.refreshArticles()
-
-      // 轮询状态（每3秒查一次，最多120秒）
-      const maxAttempts = 40
-      for (let i = 0; i < maxAttempts; i++) {
-        await new Promise(resolve => setTimeout(resolve, 3000))
-        const status = await api.getRefreshStatus()
-
-        if (status.status === 'done') {
-          wx.hideLoading()
-          const msg = `新增${status.new_articles || 0}篇，生成${status.digest_count || 0}条精选`
-          wx.showToast({ title: msg, icon: 'none', duration: 3000 })
-          this.loadDigest()
-          return
-        } else if (status.status === 'error') {
-          wx.hideLoading()
-          wx.showToast({ title: '获取失败: ' + (status.error || ''), icon: 'none', duration: 3000 })
-          return
-        } else {
-          wx.showLoading({ title: `获取中(${status.elapsed || 0}s)...`, mask: true })
-        }
-      }
-
-      wx.hideLoading()
-      wx.showToast({ title: '获取超时，请稍后查看', icon: 'none', duration: 3000 })
-      this.loadDigest()
-    } catch (err) {
-      wx.hideLoading()
-      wx.showToast({ title: '获取失败，请稍后重试', icon: 'none' })
-      console.error('刷新失败:', err)
-    } finally {
-      this.setData({ refreshing: false })
-    }
   }
 })

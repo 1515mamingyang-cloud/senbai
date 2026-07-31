@@ -1,5 +1,5 @@
-/* pages/login/login.wxss */
-.login-page {
+/* pages/register/register.wxss */
+.register-page {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -10,8 +10,8 @@
 
 .logo-area {
   text-align: center;
-  margin-top: 180rpx;
-  margin-bottom: 80rpx;
+  margin-top: 140rpx;
+  margin-bottom: 60rpx;
 }
 
 .logo-icon {
@@ -53,17 +53,17 @@
   color: #ccc;
 }
 
-.login-btn {
+.register-btn {
   margin-top: 16rpx;
 }
 
-.register-link {
+.back-link {
   text-align: center;
   margin-top: 32rpx;
   font-size: 28rpx;
   color: #2db84d;
 }
 
-.register-link:active {
+.back-link:active {
   opacity: 0.6;
 }

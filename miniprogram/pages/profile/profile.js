@@ -7,7 +7,8 @@ Page({
     industries: [],        // 所有行业
     selectedIds: [],       // 已选中的行业 ID
     loading: true,
-    saving: false
+    saving: false,
+    loadError: ''          // 加载错误信息
   },
 
   onShow() {
@@ -16,14 +17,25 @@ Page({
     this.loadData()
   },
 
+  // 下拉刷新
+  onPullDownRefresh() {
+    this.loadData().then(() => {
+      wx.stopPullDownRefresh()
+    }).catch(() => {
+      wx.stopPullDownRefresh()
+    })
+  },
+
   async loadData() {
-    this.setData({ loading: true })
+    this.setData({ loading: true, loadError: '' })
     try {
       // 并行加载：所有行业 + 我已关注的行业
       const [allIndustries, myIndustries] = await Promise.all([
         api.getIndustries(),
         api.getMyIndustries()
       ])
+
+      console.log('[Profile] 加载成功:', { allIndustries, myIndustries })
 
       // 标记已选中的行业
       const selectedIds = (myIndustries || []).map(i => i.id)
@@ -34,7 +46,8 @@ Page({
 
       this.setData({ industries, selectedIds })
     } catch (err) {
-      console.error('加载数据失败:', err)
+      console.error('[Profile] 加载数据失败:', err)
+      this.setData({ loadError: '加载失败，请检查网络后下拉刷新' })
     } finally {
       this.setData({ loading: false })
     }
