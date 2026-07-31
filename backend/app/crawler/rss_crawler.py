@@ -90,14 +90,8 @@ def crawl_single_source(
         本次新增的文章数量
     """
     try:
-        # 先用 urllib 下载 RSS 内容（带 10 秒超时），再用 feedparser 解析
-        # 这样可以避免 feedparser 的 timeout 参数不生效导致卡死
-        content = _fetch_rss_content(rss_url, timeout=10)
-        if not content:
-            logger.warning("RSS 内容为空或下载失败 [%s]", source_name)
-            return 0
-
-        feed = feedparser.parse(content)
+        # feedparser 直接解析 URL（在云容器内验证可用）
+        feed = feedparser.parse(rss_url)
 
         if feed.bozo and not feed.entries:
             logger.warning("RSS 解析失败 [%s]: %s", source_name, feed.bozo_exception)
