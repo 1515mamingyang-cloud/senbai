@@ -7,6 +7,11 @@
       <!-- 小猫头像（可点击进留言板） -->
       <view class="cat-avatar-wrap" bindtap="onTapCat">
         <image class="cat-avatar {{catAnimating ? 'cat-animate' : ''}}" src="/images/cat_avatar.png" mode="aspectFill"></image>
+        <!-- 未读留言红点 -->
+        <view class="unread-badge" wx:if="{{unreadMessages > 0}}">
+          <text wx:if="{{unreadMessages > 99}}">99+</text>
+          <text wx:else>{{unreadMessages}}</text>
+        </view>
       </view>
 
       <!-- 问候语 -->
@@ -29,6 +34,7 @@
       <view class="cat-action-btn" bindtap="onTapCat">
         <text class="cat-action-icon">💬</text>
         <text class="cat-action-label">留言</text>
+        <view class="action-badge" wx:if="{{unreadMessages > 0}}"></view>
       </view>
     </view>
 

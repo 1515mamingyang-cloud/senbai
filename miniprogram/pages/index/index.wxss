@@ -25,12 +25,49 @@
   overflow: hidden;
   border: 4rpx solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+  position: relative;
 }
 
 .cat-avatar {
   width: 100%;
   height: 100%;
   display: block;
+}
+
+/* 未读留言红点（头像上） */
+.unread-badge {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  border-radius: 16rpx;
+  background: #ff3b30;
+  border: 3rpx solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18rpx;
+  color: #fff;
+  font-weight: 600;
+  padding: 0 6rpx;
+  z-index: 10;
+}
+
+/* 留言按钮小红点 */
+.action-badge {
+  position: absolute;
+  top: 6rpx;
+  right: 10rpx;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #ff3b30;
+  border: 2rpx solid #2db84d;
+}
+
+.cat-action-btn {
+  position: relative;
 }
 
 /* 小猫互动动画 */

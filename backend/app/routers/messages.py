@@ -1,6 +1,7 @@
 """留言板路由：支持公开发布 + 定向发布"""
 import json
 import logging
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, field_validator
@@ -37,6 +38,46 @@ class MessageCreate(BaseModel):
         if v not in ("public", "targeted"):
             raise ValueError("visibility 必须是 public 或 targeted")
         return v
+
+
+@router.get("/unread-count", summary="获取未读留言数")
+def unread_count(
+    since: str = Query("", description="上次阅读时间 YYYY-MM-DD HH:MM"),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """获取指定时间之后的新留言数（公开+定向给自己的）"""
+    all_msgs = db.execute(
+        select(Message).order_by(desc(Message.created_at))
+    ).scalars().all()
+
+    # 过滤可见消息
+    visible_msgs = []
+    for m in all_msgs:
+        if m.visibility == "public" or m.visibility is None:
+            visible_msgs.append(m)
+        elif m.user_id == user.id:
+            visible_msgs.append(m)
+        elif m.visible_to:
+            try:
+                recipients = json.loads(m.visible_to)
+                if user.username in recipients:
+                    visible_msgs.append(m)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+    # 计算未读数
+    if since:
+        try:
+            since_dt = datetime.strptime(since, "%Y-%m-%d %H:%M")
+            unread = sum(1 for m in visible_msgs if m.created_at > since_dt)
+        except ValueError:
+            unread = len(visible_msgs)
+    else:
+        # 没有记录上次阅读时间，返回所有可见消息数
+        unread = len(visible_msgs)
+
+    return {"unread": unread}
 
 
 @router.get("", summary="获取留言列表")

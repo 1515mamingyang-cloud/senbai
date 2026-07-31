@@ -87,11 +87,16 @@ Page({
   _reelCenter: null,
   _lastAngle: null,
   _angleAccum: 0,
-  _biteTimer: null,
   _hookTimeout: null,
   _resetTimer: null,
   _landTimer: null,     // 自动落水定时器
   _reelStopTimer: null, // 纺车轮停止定时器
+  // 中鱼判定（V4：按收线进度+距离+速度）
+  _biteChance: 0,       // 基础中鱼概率（距离决定 0.6~0.8）
+  _biteThreshold: 0,    // 中鱼判定进度点（25%~75%）
+  _biteChecked: false,  // 是否已做过中鱼判定
+  _reelSpeeds: [],      // 收线速度采样（ms per 1% progress）
+  _lastProgressTime: null,
 
   onLoad() {
     this._loadStorage()
@@ -113,7 +118,6 @@ Page({
   _cleanup() {
     try { wx.stopAccelerometer() } catch(e) {}
     try { wx.offAccelerometerChange() } catch(e) {}
-    if (this._biteTimer) { clearTimeout(this._biteTimer); this._biteTimer = null }
     if (this._hookTimeout) { clearTimeout(this._hookTimeout); this._hookTimeout = null }
     if (this._resetTimer) { clearTimeout(this._resetTimer); this._resetTimer = null }
     if (this._landTimer) { clearTimeout(this._landTimer); this._landTimer = null }
@@ -215,6 +219,19 @@ Page({
 
   // ===== 自动落水 -> 收线 =====
   _startReeling() {
+    // V4: 中鱼概率由抛投距离决定（15m=60%, 80m=80%）
+    var dist = this.data.castDistance
+    var baseChance = 0.6 + (dist - 15) / 65 * 0.2  // 0.6 ~ 0.8
+
+    // 随机选择中鱼判定进度点（25%~75%之间）
+    var biteThreshold = 25 + Math.floor(Math.random() * 51)
+
+    this._biteChance = baseChance
+    this._biteThreshold = biteThreshold
+    this._biteChecked = false
+    this._reelSpeeds = []
+    this._lastProgressTime = null
+
     this.setData({
       state: 'reeling',
       statusText: '手指在圆环上画圈收线\n耐心等待鱼咬钩...',
@@ -225,20 +242,7 @@ Page({
 
     this._angleAccum = 0
     this._lastAngle = null
-
-    // 上鱼延迟：8~20秒（比之前3~8秒更久）
-    var biteDelay = 8000 + Math.random() * 12000
-    var self = this
-    this._biteTimer = setTimeout(function() {
-      if (self.data.state === 'reeling') {
-        // 60%概率上鱼，40%没有鱼咬钩
-        if (Math.random() < 0.6) {
-          self._onBite()
-        } else {
-          self._onNoBite()
-        }
-      }
-    }, biteDelay)
+    // 不再设置定时器，中鱼判定在收线进度达到阈值时触发
   },
 
   // 收线触摸：开始
@@ -278,6 +282,15 @@ Page({
       var reelAngle = Math.round((this._angleAccum * 180 / Math.PI) % 360)
 
       if (progress !== this.data.reelProgress) {
+        // 记录收线速度（每次进度变化的时间间隔）
+        var now = Date.now()
+        if (this._lastProgressTime) {
+          var dt = now - this._lastProgressTime
+          this._reelSpeeds.push(dt)
+          if (this._reelSpeeds.length > 10) this._reelSpeeds.shift()
+        }
+        this._lastProgressTime = now
+
         // 启动纺车轮旋转
         if (this._reelStopTimer) { clearTimeout(this._reelStopTimer); this._reelStopTimer = null }
         this.setData({
@@ -291,9 +304,44 @@ Page({
           self.setData({ reelSpinning: false })
         }, 500)
 
+        // V4: 中鱼判定 —— 达到阈值进度时触发
+        if (!this._biteChecked && progress >= this._biteThreshold) {
+          this._biteChecked = true
+
+          // 计算收线速度惩罚：收太快降低中鱼率
+          // avgSpeed = 每推进1%进度平均耗时(ms)
+          // < 150ms/1% = 极快（惩罚到0.5倍），> 500ms/1% = 慢（无惩罚）
+          var avgSpeed = 0
+          if (this._reelSpeeds.length > 0) {
+            var sum = 0
+            for (var i = 0; i < this._reelSpeeds.length; i++) sum += this._reelSpeeds[i]
+            avgSpeed = sum / this._reelSpeeds.length
+          }
+          var speedFactor = 1.0
+          if (avgSpeed > 0 && avgSpeed < 500) {
+            speedFactor = Math.max(0.5, avgSpeed / 500)  // 最低保留50%概率
+          }
+          var adjustedChance = this._biteChance * speedFactor
+
+          console.log('[Fishing] 中鱼判定:', {
+            distance: this.data.castDistance,
+            baseChance: this._biteChance.toFixed(2),
+            avgSpeed: Math.round(avgSpeed) + 'ms',
+            speedFactor: speedFactor.toFixed(2),
+            adjustedChance: adjustedChance.toFixed(2),
+            threshold: this._biteThreshold + '%'
+          })
+
+          if (Math.random() < adjustedChance) {
+            // 中鱼！
+            this._onBite()
+            return
+          }
+          // 没中鱼，继续收线到100%
+        }
+
         // 进度满100% -> 收线完毕，没上鱼
         if (progress >= 100 && this.data.state === 'reeling') {
-          if (this._biteTimer) { clearTimeout(this._biteTimer); this._biteTimer = null }
           this._onReelComplete()
         }
       }

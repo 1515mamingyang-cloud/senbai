@@ -23,6 +23,11 @@ Page({
   onShow() {
     // 每次显示时刷新第一页
     this.loadMessages(true)
+    // 更新已读时间
+    const now = new Date()
+    const pad = (n) => n.toString().padStart(2, '0')
+    const timeStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes())
+    wx.setStorageSync('lastReadMessageTime', timeStr)
   },
 
   // 加载留言

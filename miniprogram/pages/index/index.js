@@ -41,7 +41,9 @@ Page({
     fishStock: 10,
     // 用户已选行业
     selectedIndustryIds: [],
-    hasSelectedIndustries: false
+    hasSelectedIndustries: false,
+    // 留言未读
+    unreadMessages: 0
   },
 
   onLoad() {
@@ -55,6 +57,8 @@ Page({
     this._checkIndustriesAndLoad()
     // 从路亚页面返回时刷新鱼库存
     this._loadFishStock()
+    // 检查留言未读数
+    this._checkUnreadMessages()
   },
 
   // 下拉刷新
@@ -109,6 +113,17 @@ Page({
     }
   },
 
+  // 检查留言未读数
+  async _checkUnreadMessages() {
+    try {
+      const lastRead = wx.getStorageSync('lastReadMessageTime') || ''
+      const res = await api.getUnreadCount(lastRead)
+      this.setData({ unreadMessages: res.unread || 0 })
+    } catch (err) {
+      console.error('检查未读留言失败:', err)
+    }
+  },
+
   // 跳转到行业选择页（我的页面）
   goSelectIndustries() {
     wx.switchTab({ url: '/pages/profile/profile' })
@@ -122,8 +137,14 @@ Page({
     })
   },
 
-  // 点击小猫 → 跳转留言板
+  // 点击小猫 → 跳转留言板（清除未读标记）
   onTapCat() {
+    // 记录当前时间为已读时间
+    const now = new Date()
+    const pad = (n) => n.toString().padStart(2, '0')
+    const timeStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes())
+    wx.setStorageSync('lastReadMessageTime', timeStr)
+    this.setData({ unreadMessages: 0 })
     wx.navigateTo({
       url: '/pages/messages/messages'
     })

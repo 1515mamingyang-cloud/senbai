@@ -86,9 +86,26 @@ def init_data():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """生命周期：启动时初始化数据 + 启动每日定时任务"""
+    """生命周期：启动时初始化数据 + 启动每日定时任务 + 部署时自动爬取一次"""
     init_data()
     start_scheduler()
+
+    # 部署时自动爬取+AI总结（后台线程，不阻塞启动）
+    import threading
+    def _startup_crawl():
+        logger.info("部署启动：自动爬取+AI总结开始（后台执行）")
+        try:
+            from app.crawler.rss_crawler import crawl_all_sources
+            articles = crawl_all_sources()
+            logger.info("部署启动：抓取完成，新增 %d 篇", len(articles))
+
+            from app.ai.summarizer import generate_daily_digest
+            digest_count = generate_daily_digest(articles)
+            logger.info("部署启动：AI总结完成，生成 %d 条精选", digest_count)
+        except Exception as e:
+            logger.exception("部署启动：自动爬取失败: %s", e)
+
+    threading.Thread(target=_startup_crawl, daemon=True).start()
     yield
 
 

@@ -194,6 +194,12 @@ function sendMessage(content, visibility, visibleTo) {
   })
 }
 
+// 获取未读留言数
+function getUnreadCount(since) {
+  const param = since ? '?since=' + encodeURIComponent(since) : ''
+  return request('/api/messages/unread-count' + param)
+}
+
 module.exports = {
   request,
   login,
@@ -210,5 +216,6 @@ module.exports = {
   getRefreshStatus,
   getDigest,
   getMessages,
-  sendMessage
+  sendMessage,
+  getUnreadCount
 }
