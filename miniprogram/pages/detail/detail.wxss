@@ -1,0 +1,196 @@
+/* pages/detail/detail.wxss */
+.detail-page {
+  min-height: 100vh;
+  padding: 32rpx 32rpx 160rpx;  /* 底部留操作栏空间 */
+}
+
+/* 标题 */
+.detail-title {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #222;
+  line-height: 1.4;
+  margin-bottom: 24rpx;
+}
+
+/* 来源信息 */
+.detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-bottom: 40rpx;
+  padding-bottom: 32rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.meta-source {
+  color: #2db84d;
+  font-size: 26rpx;
+}
+
+.meta-time {
+  color: #ccc;
+  font-size: 24rpx;
+}
+
+/* 内容区块 */
+.section {
+  margin-bottom: 40rpx;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.section-icon {
+  font-size: 32rpx;
+  margin-right: 12rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.section-body {
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: #444;
+}
+
+/* AI 总结区域 */
+.summary-body {
+  background: #e8f5e9;
+  border-radius: 12rpx;
+  padding: 28rpx;
+  color: #2e7d32;
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+/* 观点列表 */
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.insight-card {
+  background: #fafafa;
+  border-radius: 12rpx;
+  padding: 28rpx;
+  border-left: 6rpx solid #2db84d;
+}
+
+.insight-point {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16rpx;
+}
+
+.insight-index {
+  flex-shrink: 0;
+  width: 36rpx;
+  height: 36rpx;
+  line-height: 36rpx;
+  text-align: center;
+  background: #2db84d;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 22rpx;
+  font-weight: 600;
+  margin-right: 16rpx;
+  margin-top: 4rpx;
+}
+
+.insight-point-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.insight-desc {
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: #555;
+  padding-left: 52rpx;
+}
+
+/* 原文链接 */
+.source-link {
+  margin-top: 48rpx;
+  padding: 24rpx;
+  text-align: center;
+  border-top: 1rpx solid #eee;
+}
+
+.link-text {
+  color: #2db84d;
+  font-size: 28rpx;
+}
+
+.link-hint {
+  color: #ccc;
+  font-size: 22rpx;
+  margin-left: 12rpx;
+}
+
+/* 底部操作栏 */
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: #fff;
+  border-top: 1rpx solid #eee;
+  padding: 16rpx 0;
+  z-index: 100;
+}
+
+.action-btn {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+}
+
+.action-icon {
+  display: block;
+  font-size: 40rpx;
+}
+
+.action-label {
+  display: block;
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+/* 激活状态 */
+.active-like .action-label {
+  color: #2db84d;
+}
+
+.active-dislike .action-label {
+  color: #999;
+}
+
+.active-fav .action-label {
+  color: #ffa726;
+}
+
+.active-fav .action-icon {
+  color: #ffa726;
+}
+
+/* 加载中 */
+.loading {
+  text-align: center;
+  padding: 200rpx 0;
+  color: #999;
+}

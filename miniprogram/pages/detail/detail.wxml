@@ -1,0 +1,66 @@
+<!-- pages/detail/detail.wxml - 资讯详情页 -->
+<view class="detail-page" wx:if="{{!loading && article}}">
+
+  <!-- 标题 -->
+  <view class="detail-title">{{article.title}}</view>
+
+  <!-- 来源信息 -->
+  <view class="detail-meta">
+    <text class="meta-source">{{article.source_name}}</text>
+    <text class="meta-time">{{article.published_at}}</text>
+  </view>
+
+  <!-- AI 一句话观点 -->
+  <view class="section" wx:if="{{article.summary}}">
+    <view class="section-header">
+      <text class="section-icon">💡</text>
+      <text class="section-title">核心观点</text>
+    </view>
+    <view class="section-body summary-body">{{article.summary}}</view>
+  </view>
+
+  <!-- AI 观点解读列表 -->
+  <view class="section" wx:if="{{article.insights.length > 0}}">
+    <view class="section-header">
+      <text class="section-icon">📊</text>
+      <text class="section-title">深度解读</text>
+    </view>
+    <view class="insights-list">
+      <view class="insight-card" wx:for="{{article.insights}}" wx:key="index">
+        <view class="insight-point">
+          <text class="insight-index">{{index + 1}}</text>
+          <text class="insight-point-text">{{item.point}}</text>
+        </view>
+        <view class="insight-desc">{{item.description}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 原文链接 -->
+  <view class="source-link" bindtap="onCopyLink">
+    <text class="link-text">查看原文 →</text>
+    <text class="link-hint">（点击复制链接）</text>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="action-bar safe-bottom">
+    <view class="action-btn {{feedback === 1 ? 'active-like' : ''}}" bindtap="onLike">
+      <text class="action-icon">👍</text>
+      <text class="action-label">喜欢</text>
+    </view>
+    <view class="action-btn {{feedback === -1 ? 'active-dislike' : ''}}" bindtap="onDislike">
+      <text class="action-icon">👎</text>
+      <text class="action-label">不喜欢</text>
+    </view>
+    <view class="action-btn {{favorited ? 'active-fav' : ''}}" bindtap="onFavorite">
+      <text class="action-icon">{{favorited ? '★' : '☆'}}</text>
+      <text class="action-label">{{favorited ? '已收藏' : '收藏'}}</text>
+    </view>
+  </view>
+
+</view>
+
+<!-- 加载中 -->
+<view class="loading" wx:if="{{loading}}">
+  <text>加载中...</text>
+</view>

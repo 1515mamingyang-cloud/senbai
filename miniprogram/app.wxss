@@ -1,0 +1,77 @@
+/* app.wxss - 全局样式（清新绿色系） */
+
+/* 色彩系统
+   主色: #2db84d (自然绿)
+   浅色: #e8f5e9 (背景绿)
+   文字: #333 / #666 / #999
+   边框: #e0e0e0
+*/
+
+page {
+  background-color: #f5f7f5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* 卡片容器 */
+.card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 标题 */
+.title-lg {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #222;
+}
+
+.title-md {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+}
+
+/* 次要文字 */
+.text-secondary {
+  color: #999;
+  font-size: 24rpx;
+}
+
+.text-source {
+  color: #2db84d;
+  font-size: 24rpx;
+}
+
+/* 按钮 */
+.btn-primary {
+  background: #2db84d;
+  color: #fff;
+  border-radius: 12rpx;
+  padding: 20rpx 0;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 500;
+}
+
+.btn-primary:active {
+  background: #25993f;
+}
+
+/* 空状态 */
+.empty {
+  text-align: center;
+  padding: 120rpx 0;
+  color: #ccc;
+  font-size: 28rpx;
+}
+
+/* 安全区域底部留白 */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

@@ -1,0 +1,35 @@
+<!-- pages/favorites/favorites.wxml - 收藏页 -->
+<view class="favorites-page">
+
+  <view class="fav-list" wx:if="{{favorites.length > 0}}">
+    <view
+      class="fav-card"
+      wx:for="{{favorites}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="onTapArticle"
+    >
+      <view class="fav-summary" wx:if="{{item.summary}}">
+        <text class="summary-tag">AI解读</text>
+        <text class="summary-text">{{item.summary}}</text>
+      </view>
+
+      <view class="fav-title">{{item.title}}</view>
+
+      <view class="fav-footer">
+        <text class="fav-source">{{item.source_name}}</text>
+        <text class="fav-time">收藏于 {{item.favorited_at}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:elif="{{!loading}}">
+    <text>暂无收藏</text>
+    <text class="empty-sub">在资讯详情页点击 ☆ 即可收藏</text>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+</view>

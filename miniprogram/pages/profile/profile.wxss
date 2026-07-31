@@ -1,0 +1,131 @@
+/* pages/profile/profile.wxss */
+.profile-page {
+  min-height: 100vh;
+  padding-bottom: 60rpx;
+}
+
+/* 用户信息头部 */
+.user-header {
+  background: linear-gradient(135deg, #2db84d 0%, #25993f 100%);
+  padding: 60rpx 32rpx;
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 50rpx;
+  margin-right: 28rpx;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  color: #fff;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+
+.user-desc {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 24rpx;
+  margin-top: 8rpx;
+}
+
+/* 行业选择区域 */
+.section {
+  margin: 32rpx 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.section-hint {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 28rpx;
+  display: block;
+}
+
+/* 行业网格 */
+.industry-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.industry-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 28rpx;
+  border-radius: 12rpx;
+  border: 2rpx solid #e0e0e0;
+  background: #fafafa;
+  min-width: 200rpx;
+}
+
+.industry-item.checked {
+  border-color: #2db84d;
+  background: #e8f5e9;
+}
+
+.industry-name {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+}
+
+.industry-item.checked .industry-name {
+  color: #2db84d;
+  font-weight: 500;
+}
+
+.industry-check {
+  color: #2db84d;
+  font-size: 32rpx;
+  margin-left: 12rpx;
+}
+
+/* 保存按钮 */
+.save-btn {
+  margin-top: 40rpx;
+}
+
+/* 退出登录 */
+.logout-area {
+  margin: 40rpx 24rpx;
+}
+
+.logout-btn {
+  text-align: center;
+  color: #e53935;
+  font-size: 28rpx;
+  padding: 28rpx 0;
+  background: #fff;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+/* 加载中 */
+.loading {
+  text-align: center;
+  padding: 80rpx 0;
+  color: #999;
+}

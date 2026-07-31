@@ -1,0 +1,46 @@
+<!-- pages/profile/profile.wxml - 我的页面 -->
+<view class="profile-page">
+
+  <!-- 用户信息 -->
+  <view class="user-header">
+    <view class="user-avatar">🌿</view>
+    <view class="user-info">
+      <text class="user-name">{{username}}</text>
+      <text class="user-desc">森柏用户</text>
+    </view>
+  </view>
+
+  <!-- 行业选择 -->
+  <view class="section" wx:if="{{!loading}}">
+    <view class="section-title">关注行业</view>
+    <text class="section-hint">选择你感兴趣的产业，系统将为你推送相关资讯</text>
+
+    <view class="industry-grid">
+      <view
+        class="industry-item {{item.checked ? 'checked' : ''}}"
+        wx:for="{{industries}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="onToggleIndustry"
+      >
+        <text class="industry-name">{{item.name}}</text>
+        <text class="industry-check">{{item.checked ? '✓' : ''}}</text>
+      </view>
+    </view>
+
+    <view class="btn-primary save-btn" bindtap="onSave">
+      {{saving ? '保存中...' : '保存设置'}}
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 退出登录 -->
+  <view class="logout-area" wx:if="{{!loading}}">
+    <view class="logout-btn" bindtap="onLogout">退出登录</view>
+  </view>
+
+</view>
