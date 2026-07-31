@@ -63,7 +63,8 @@ def crawl_single_source(
     """
     try:
         # feedparser 会自动下载并解析 RSS
-        feed = feedparser.parse(rss_url)
+        # 加超时：单个 RSS 源最多等 15 秒，避免卡死整个流程
+        feed = feedparser.parse(rss_url, request_headers={"User-Agent": "SenbaiBot/1.0"}, timeout=15)
 
         if feed.bozo and not feed.entries:
             logger.warning("RSS 解析失败 [%s]: %s", source_name, feed.bozo_exception)
