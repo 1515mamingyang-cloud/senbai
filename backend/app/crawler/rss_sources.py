@@ -1,46 +1,25 @@
-"""RSS 源配置：每个行业对应哪些 RSS 订阅地址
+"""RSS 源配置：通用科技资讯源
 
-说明：
-- 全部使用直连 RSS 源（不依赖 RSSHub 公共实例，稳定性更好）
-- 只保留经过验证可以正常访问的源
-- 实际使用时可根据需要增删，或后续改成数据库管理
+设计变更（v2）：
+- 不再按行业分组，改为通用列表
+- 爬虫阶段不区分行业，AI总结时再做行业分类
+- 好处：源少而精，AI全局视野挑大事，留口子支持未来关键词/个性化
 
-注意：爬取公开资讯请遵守版权法规，只存标题+摘要+原文链接，不全文转载。
+可用性验证（2026-07）：
+- 36氪 / 钛媒体 / 爱范儿 / 少数派：HTTP 200，稳定
+- 机器之心 / 北极星电力：HTTP 302，feedparser 能自动跟随
+
+扩展方式：
+- 直接在列表里增删即可
+- 未来可改为数据库管理，支持动态配置
 """
 
-# 行业名称 → RSS 源列表
-# 行业名称必须与 seed_industries.py 中的预置行业名称一致
-RSS_SOURCES = {
-    "半导体": [
-        {"name": "36氪", "url": "https://36kr.com/feed"},
-        {"name": "钛媒体", "url": "https://www.tmtpost.com/feed"},
-    ],
-    "新能源": [
-        {"name": "36氪", "url": "https://36kr.com/feed"},
-        {"name": "钛媒体", "url": "https://www.tmtpost.com/feed"},
-    ],
-    "人工智能": [
-        {"name": "36氪", "url": "https://36kr.com/feed"},
-        {"name": "钛媒体", "url": "https://www.tmtpost.com/feed"},
-    ],
-    "生物医药": [
-        {"name": "36氪", "url": "https://36kr.com/feed"},
-        {"name": "钛媒体", "url": "https://www.tmtpost.com/feed"},
-    ],
-    "消费电子": [
-        {"name": "爱范儿", "url": "https://www.ifanr.com/feed"},
-        {"name": "少数派", "url": "https://sspai.com/feed"},
-    ],
-    "金融科技": [
-        {"name": "36氪", "url": "https://36kr.com/feed"},
-        {"name": "钛媒体", "url": "https://www.tmtpost.com/feed"},
-    ],
-    "航空航天": [
-        {"name": "36氪", "url": "https://36kr.com/feed"},
-        {"name": "钛媒体", "url": "https://www.tmtpost.com/feed"},
-    ],
-    "智能制造": [
-        {"name": "36氪", "url": "https://36kr.com/feed"},
-        {"name": "钛媒体", "url": "https://www.tmtpost.com/feed"},
-    ],
-}
+# 通用 RSS 源列表（不按行业分，AI会在总结阶段做行业分类）
+RSS_SOURCES = [
+    {"name": "36氪", "url": "https://36kr.com/feed", "max_items": 8},
+    {"name": "钛媒体", "url": "https://www.tmtpost.com/feed", "max_items": 8},
+    {"name": "爱范儿", "url": "https://www.ifanr.com/feed", "max_items": 5},
+    {"name": "少数派", "url": "https://sspai.com/feed", "max_items": 5},
+    {"name": "机器之心", "url": "https://www.jiqizhixin.com/rss", "max_items": 5},
+    {"name": "北极星电力", "url": "https://news.bjx.com.cn/rss/news.xml", "max_items": 5},
+]
