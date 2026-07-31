@@ -121,3 +121,14 @@ class DailyDigest(Base):
 
     industry = relationship("Industry")
     article = relationship("Article")
+
+
+class Message(Base):
+    """留言板：所有用户共享的公共留言，异步互通"""
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), comment="发送者ID")
+    username = Column(String(50), comment="发送者用户名（冗余存储，避免连表查询）")
+    content = Column(String(500), comment="留言内容")
+    created_at = Column(DateTime, default=datetime.utcnow)

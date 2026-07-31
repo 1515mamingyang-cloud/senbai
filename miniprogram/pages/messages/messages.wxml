@@ -1,0 +1,45 @@
+<!-- pages/messages/messages.wxml - 留言板 -->
+<view class="messages-page">
+
+  <!-- 留言列表 -->
+  <view class="message-list">
+    <view class="message-item {{item.is_mine ? 'mine' : ''}}" wx:for="{{messages}}" wx:key="id">
+      <view class="message-header">
+        <text class="message-username">{{item.username}}</text>
+        <text class="message-time">{{item.created_at}}</text>
+      </view>
+      <view class="message-content">{{item.content}}</view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty" wx:if="{{!loading && messages.length === 0}}">
+      <text class="empty-icon">🐱</text>
+      <text>还没有留言，快来抢沙发~</text>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="loading-more" wx:if="{{loading}}">
+      <text>加载中...</text>
+    </view>
+    <view class="loading-more" wx:if="{{!hasMore && messages.length > 0}}">
+      <text>没有更多了</text>
+    </view>
+  </view>
+
+  <!-- 底部输入栏 -->
+  <view class="input-bar">
+    <input
+      class="input-field"
+      placeholder="写点什么..."
+      value="{{inputContent}}"
+      bindinput="onInput"
+      confirm-type="send"
+      bindconfirm="onSend"
+      maxlength="500"
+    />
+    <button class="send-btn" bindtap="onSend" disabled="{{!inputContent || sending}}">
+      {{sending ? '...' : '发送'}}
+    </button>
+  </view>
+
+</view>

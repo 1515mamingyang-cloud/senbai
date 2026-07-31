@@ -1,0 +1,107 @@
+<!-- pages/index/index.wxml - 首页：森柏助手 + 每日精选 -->
+<view class="index-page">
+
+  <!-- 顶部区域：小猫 + 互动 -->
+  <view class="header">
+    <view class="header-top">
+      <!-- 小猫头像（可点击进留言板） -->
+      <view class="cat-avatar-wrap" bindtap="onTapCat">
+        <image class="cat-avatar {{catAnimating ? 'cat-animate' : ''}}" src="/images/cat_avatar.png" mode="aspectFill"></image>
+      </view>
+
+      <!-- 问候语 -->
+      <view class="header-info">
+        <text class="header-greeting">你好，{{username}}</text>
+        <text class="header-sub">森柏助手为你服务</text>
+      </view>
+
+      <!-- 获取精选按钮 -->
+      <button
+        class="refresh-btn {{refreshing ? 'refreshing' : ''}}"
+        bindtap="onTapRefresh"
+        disabled="{{refreshing}}"
+      >
+        {{refreshing ? '获取中' : '获取精选'}}
+      </button>
+    </view>
+
+    <!-- 互动按钮 -->
+    <view class="cat-actions">
+      <view class="cat-action-btn" bindtap="onFeedCat">
+        <text class="cat-action-icon">🐟</text>
+        <text class="cat-action-label">投喂</text>
+      </view>
+      <view class="cat-action-btn" bindtap="onPetCat">
+        <text class="cat-action-icon">🐾</text>
+        <text class="cat-action-label">抚摸</text>
+      </view>
+      <view class="cat-action-btn" bindtap="onTapCat">
+        <text class="cat-action-icon">💬</text>
+        <text class="cat-action-label">留言</text>
+      </view>
+    </view>
+
+    <!-- 撒娇气泡 -->
+    <view class="cat-bubble {{catBubbleShow ? 'show' : ''}}" wx:if="{{catBubbleText}}">
+      {{catBubbleText}}
+    </view>
+
+    <!-- 日期 -->
+    <text class="header-date">{{digestDate ? digestDate + ' 产业精选' : '暂无精选，点击获取'}}</text>
+  </view>
+
+  <!-- 精选列表（按行业分组） -->
+  <block wx:if="{{industries.length > 0}}">
+    <view class="industry-section" wx:for="{{industries}}" wx:key="industry_id">
+      <!-- 行业标题 -->
+      <view class="industry-header">
+        <text class="industry-name">{{item.industry_name}}</text>
+        <text class="industry-count">{{item.items.length}}条大事</text>
+      </view>
+
+      <!-- 该行业的精选卡片 -->
+      <view
+        class="article-card"
+        wx:for="{{item.items}}"
+        wx:for-item="article"
+        wx:key="id"
+        data-id="{{article.article_id}}"
+        bindtap="onTapArticle"
+      >
+        <!-- AI 总结 -->
+        <view class="article-summary">
+          <text class="summary-tag">AI解读</text>
+          <text class="summary-text">{{article.summary}}</text>
+        </view>
+
+        <!-- 标题 -->
+        <view class="article-title">{{article.title}}</view>
+
+        <!-- AI 观点（最多展示2个） -->
+        <view class="insights" wx:if="{{article.insights.length > 0}}">
+          <view class="insight-item" wx:for="{{article.insights}}" wx:for-item="insight" wx:key="point">
+            <text class="insight-point">• {{insight.point}}</text>
+            <text class="insight-desc">{{insight.description}}</text>
+          </view>
+        </view>
+
+        <!-- 底部信息 -->
+        <view class="article-footer">
+          <text class="article-source">{{article.source_name}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:elif="{{!loading}}">
+    <text>暂无精选资讯</text>
+    <text class="empty-sub">点击上方按钮手动获取，或等待每天8点自动更新</text>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+</view>

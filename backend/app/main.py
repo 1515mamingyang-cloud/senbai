@@ -10,7 +10,7 @@ from app.database import init_db, SessionLocal
 from app.config import settings
 from app.models import Industry, User
 from app.auth import hash_password
-from app.routers import auth, articles, industries
+from app.routers import auth, articles, industries, messages
 from app.scheduler import start_scheduler
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
@@ -65,6 +65,20 @@ def init_data():
             logger.info(f"已创建管理员账号: {admin_username}")
         else:
             logger.info(f"已有 {len(user_count)} 个用户，跳过创建管理员")
+
+        # 确保额外用户存在（目前只有xiaoweining）
+        extra_users = [("xiaoweining", "123456")]
+        for uname, upwd in extra_users:
+            exists = db.execute(
+                select(User).where(User.username == uname)
+            ).scalar_one_or_none()
+            if not exists:
+                db.add(User(
+                    username=uname,
+                    hashed_password=hash_password(upwd),
+                ))
+                db.commit()
+                logger.info(f"已创建用户: {uname}")
     finally:
         db.close()
 
@@ -97,6 +111,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(articles.router)
 app.include_router(industries.router)
+app.include_router(messages.router)
 
 
 @app.get("/", tags=["健康检查"])
