@@ -126,6 +126,7 @@ def crawl_all_sources() -> list[Article]:
             )
             all_new.extend(articles)
     finally:
+        db.expunge_all()  # 让 Article 对象脱离 session，避免后续访问报错
         db.close()
 
     logger.info("===== 抓取完成，共新增 %d 篇 =====", len(all_new))
