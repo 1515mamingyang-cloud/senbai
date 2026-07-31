@@ -125,96 +125,7 @@ def list_articles(
     }
 
 
-@router.get("/{article_id}", summary="资讯详情")
-def get_article(
-    article_id: int,
-    db: Session = Depends(get_db),
-    user=Depends(get_current_user),
-):
-    article = db.execute(
-        select(Article).where(Article.id == article_id)
-    ).scalar_one_or_none()
-    if not article:
-        raise HTTPException(status_code=404, detail="资讯不存在")
-
-    # 解析 detail 字段（JSON 字符串）为 insights 数组
-    insights = []
-    if article.detail:
-        try:
-            raw_insights = json.loads(article.detail)
-            insights = [
-                InsightItem(point=item.get("point", ""), description=item.get("description", ""))
-                for item in raw_insights
-                if isinstance(item, dict)
-            ]
-        except (json.JSONDecodeError, TypeError):
-            # 如果 detail 不是合法 JSON（旧数据兜底），当作单个观点
-            insights = [InsightItem(point="详细解读", description=article.detail)]
-
-    return {
-        "id": article.id,
-        "title": article.title,
-        "summary": article.summary,
-        "insights": insights,
-        "source_name": article.source_name,
-        "source_url": article.source_url,
-        "industry_id": article.industry_id,
-        "published_at": article.published_at,
-    }
-
-
-@router.post("/{article_id}/feedback", summary="喜欢/不喜欢反馈")
-def feedback(
-    article_id: int,
-    req: FeedbackRequest,
-    db: Session = Depends(get_db),
-    user=Depends(get_current_user),
-):
-    # 查是否已有反馈
-    existing = db.execute(
-        select(Preference).where(
-            Preference.user_id == user.id,
-            Preference.article_id == article_id,
-        )
-    ).scalar_one_or_none()
-
-    if req.feedback == 0:
-        # 取消反馈
-        if existing:
-            db.delete(existing)
-            db.commit()
-        return {"msg": "已取消反馈"}
-    else:
-        if existing:
-            existing.feedback = req.feedback
-        else:
-            db.add(Preference(user_id=user.id, article_id=article_id, feedback=req.feedback))
-        db.commit()
-    return {"msg": "反馈已记录"}
-
-
-@router.post("/{article_id}/favorite", summary="收藏/取消收藏")
-def toggle_favorite(
-    article_id: int,
-    db: Session = Depends(get_db),
-    user=Depends(get_current_user),
-):
-    existing = db.execute(
-        select(Favorite).where(
-            Favorite.user_id == user.id,
-            Favorite.article_id == article_id,
-        )
-    ).scalar_one_or_none()
-
-    if existing:
-        db.delete(existing)
-        db.commit()
-        return {"msg": "已取消收藏", "favorited": False}
-    else:
-        db.add(Favorite(user_id=user.id, article_id=article_id))
-        db.commit()
-        return {"msg": "已收藏", "favorited": True}
-
+# ========== 固定路径路由（必须在 /{article_id} 之前定义）==========
 
 @router.post("/refresh", summary="手动获取最新资讯 + AI总结（异步）")
 def refresh_articles(
@@ -312,3 +223,96 @@ def test_crawl(
         tested += 1
 
     return {"results": results}
+
+
+# ========== 参数路径路由（/{article_id} 必须在固定路径之后）==========
+
+@router.get("/{article_id}", summary="资讯详情")
+def get_article(
+    article_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    article = db.execute(
+        select(Article).where(Article.id == article_id)
+    ).scalar_one_or_none()
+    if not article:
+        raise HTTPException(status_code=404, detail="资讯不存在")
+
+    # 解析 detail 字段（JSON 字符串）为 insights 数组
+    insights = []
+    if article.detail:
+        try:
+            raw_insights = json.loads(article.detail)
+            insights = [
+                InsightItem(point=item.get("point", ""), description=item.get("description", ""))
+                for item in raw_insights
+                if isinstance(item, dict)
+            ]
+        except (json.JSONDecodeError, TypeError):
+            # 如果 detail 不是合法 JSON（旧数据兜底），当作单个观点
+            insights = [InsightItem(point="详细解读", description=article.detail)]
+
+    return {
+        "id": article.id,
+        "title": article.title,
+        "summary": article.summary,
+        "insights": insights,
+        "source_name": article.source_name,
+        "source_url": article.source_url,
+        "industry_id": article.industry_id,
+        "published_at": article.published_at,
+    }
+
+
+@router.post("/{article_id}/feedback", summary="喜欢/不喜欢反馈")
+def feedback(
+    article_id: int,
+    req: FeedbackRequest,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    # 查是否已有反馈
+    existing = db.execute(
+        select(Preference).where(
+            Preference.user_id == user.id,
+            Preference.article_id == article_id,
+        )
+    ).scalar_one_or_none()
+
+    if req.feedback == 0:
+        # 取消反馈
+        if existing:
+            db.delete(existing)
+            db.commit()
+        return {"msg": "已取消反馈"}
+    else:
+        if existing:
+            existing.feedback = req.feedback
+        else:
+            db.add(Preference(user_id=user.id, article_id=article_id, feedback=req.feedback))
+        db.commit()
+    return {"msg": "反馈已记录"}
+
+
+@router.post("/{article_id}/favorite", summary="收藏/取消收藏")
+def toggle_favorite(
+    article_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    existing = db.execute(
+        select(Favorite).where(
+            Favorite.user_id == user.id,
+            Favorite.article_id == article_id,
+        )
+    ).scalar_one_or_none()
+
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return {"msg": "已取消收藏", "favorited": False}
+    else:
+        db.add(Favorite(user_id=user.id, article_id=article_id))
+        db.commit()
+        return {"msg": "已收藏", "favorited": True}
