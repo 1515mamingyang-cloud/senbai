@@ -6,10 +6,10 @@
 - User(用户) ←→ Article(文章)   一对多收藏，通过 Favorite 记录
 - Industry ←→ Article           一对多（每个行业有多条资讯）
 """
-from datetime import datetime
+from datetime import datetime, date
 
 from sqlalchemy import (
-    Column, Integer, String, Text, DateTime, Boolean,
+    Column, Integer, String, Text, DateTime, Date, Boolean,
     ForeignKey, UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
@@ -60,7 +60,7 @@ class Article(Base):
     __tablename__ = "articles"
 
     id = Column(Integer, primary_key=True)
-    industry_id = Column(Integer, ForeignKey("industries.id"), index=True, comment="所属行业")
+    industry_id = Column(Integer, ForeignKey("industries.id"), nullable=True, index=True, comment="所属行业（爬虫阶段为空，AI总结时分类）")
     title = Column(String(500), comment="资讯标题")
     source_url = Column(String(1000), comment="原文链接（版权合规：只放链接不存全文）")
     source_name = Column(String(100), comment="来源名称，如'36氪'、'钛媒体'")
@@ -98,3 +98,26 @@ class Favorite(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="favorites")
+
+
+class DailyDigest(Base):
+    """每日精选：AI从当天爬取的文章中，为每个行业挑选的大事
+
+    设计说明：
+    - 与 Article 分离，避免污染原始数据
+    - 每天每个行业 3~5 条
+    - 留好口子：未来可加 user_id 支持个性化，加 keywords 支持关键词搜索
+    """
+    __tablename__ = "daily_digests"
+
+    id = Column(Integer, primary_key=True)
+    date = Column(Date, index=True, comment="精选日期")
+    industry_id = Column(Integer, ForeignKey("industries.id"), index=True, comment="行业")
+    article_id = Column(Integer, ForeignKey("articles.id"), comment="关联原始文章")
+    ai_summary = Column(String(200), comment="AI一句话总结")
+    ai_insights = Column(Text, comment="AI观点JSON数组")
+    rank = Column(Integer, default=0, comment="排序，1=最重要")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    industry = relationship("Industry")
+    article = relationship("Article")
