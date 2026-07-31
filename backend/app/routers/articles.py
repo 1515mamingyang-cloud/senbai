@@ -271,3 +271,44 @@ def refresh_status(
         return {"status": "running", "elapsed": elapsed, **state}
     else:
         return {"status": "idle", "msg": "尚未发起刷新"}
+
+
+@router.get("/test-crawl", summary="诊断：测试RSS源是否可达")
+def test_crawl(
+    user=Depends(get_current_user),
+):
+    """从容器内部测试 RSS 源连通性，返回每个源的条目数和错误信息"""
+    import feedparser
+    from app.crawler.rss_sources import RSS_SOURCES
+
+    results = []
+    # 只测试前 4 个源（每种行业取第一个）
+    tested = 0
+    for industry_name, sources in RSS_SOURCES.items():
+        if tested >= 4:
+            break
+        source = sources[0]
+        try:
+            feed = feedparser.parse(source["url"])
+            entry_count = len(feed.entries)
+            error = ""
+            if feed.bozo and not feed.entries:
+                error = str(feed.bozo_exception)
+            results.append({
+                "industry": industry_name,
+                "source": source["name"],
+                "url": source["url"],
+                "entries": entry_count,
+                "error": error,
+            })
+        except Exception as e:
+            results.append({
+                "industry": industry_name,
+                "source": source["name"],
+                "url": source["url"],
+                "entries": 0,
+                "error": str(e),
+            })
+        tested += 1
+
+    return {"results": results}
