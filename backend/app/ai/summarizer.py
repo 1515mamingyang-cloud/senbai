@@ -83,15 +83,39 @@ def _match_article(title: str, articles: list[Article]) -> Article | None:
     return None
 
 
+def _get_unsummarized_articles(limit: int = 30) -> list[Article]:
+    """查询还没有被精选过的文章（不在 DailyDigest 表中的）
+
+    当爬虫没有新文章时（都已去重跳过），用这个从数据库捞旧的。
+    只取最近的 limit 篇，避免一次发给 AI 太多。
+    """
+    db = SessionLocal()
+    try:
+        # 查所有已在 DailyDigest 中的 article_id
+        from sqlalchemy import select, except_
+        # 子查询：已被精选过的 article_id
+        digested_ids = select(DailyDigest.article_id)
+        # 查不在精选列表中的文章，按时间倒序取最近 limit 篇
+        rows = db.execute(
+            select(Article)
+            .where(~Article.id.in_(digested_ids))
+            .order_by(Article.crawled_at.desc())
+            .limit(limit)
+        ).scalars().all()
+        return list(rows)
+    finally:
+        db.close()
+
+
 def generate_daily_digest(
-    articles: list[Article],
+    articles: list[Article] | None = None,
     strategy: str = "daily_highlights",
     **kwargs,
 ) -> int:
     """批量生成每日精选
 
     参数：
-        articles: 爬虫返回的新文章列表
+        articles: 爬虫返回的新文章列表。如果为空或None，自动从数据库查未精选过的
         strategy: 总结策略（留口子）
             - daily_highlights: 每日大事（当前实现）
             - keyword: 按关键词搜索（未来，kwargs传 keywords）
@@ -100,8 +124,13 @@ def generate_daily_digest(
 
     返回：生成的精选条数
     """
+    # 如果没传入文章或传入为空，从数据库查未精选过的
     if not articles:
-        logger.info("没有新文章，跳过 AI 总结")
+        articles = _get_unsummarized_articles(limit=30)
+        logger.info("从数据库查到 %d 篇未精选文章", len(articles))
+
+    if not articles:
+        logger.info("没有可总结的文章，跳过 AI 总结")
         return 0
 
     if not settings.llm_api_key:
