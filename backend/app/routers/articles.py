@@ -1,5 +1,6 @@
-"""资讯路由：资讯流、详情、喜欢/不喜欢、收藏"""
+"""资讯路由：资讯流、详情、喜欢/不喜欢、收藏、手动刷新"""
 import json
+import logging
 from datetime import datetime
 from typing import List
 
@@ -12,6 +13,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.models import Article, Preference, Favorite, UserIndustry
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/articles", tags=["资讯"])
 
 
@@ -168,3 +170,33 @@ def toggle_favorite(
         db.add(Favorite(user_id=user.id, article_id=article_id))
         db.commit()
         return {"msg": "已收藏", "favorited": True}
+
+
+@router.post("/refresh", summary="手动获取最新资讯 + AI总结")
+def refresh_articles(
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """手动触发：抓取最新资讯 → 调用大模型生成AI解读
+
+    不再自动定时执行，只有用户主动点击才消耗 Token。
+    """
+    try:
+        # 第一步：爬虫抓取
+        from app.crawler.rss_crawler import crawl_all_industries
+        new_count = crawl_all_industries()
+        logger.info("手动刷新：抓取完成，新增 %d 篇", new_count)
+
+        # 第二步：AI 总结（仅对未总结的新文章）
+        from app.ai.summarizer import summarize_pending_articles
+        summarized = summarize_pending_articles()
+        logger.info("手动刷新：AI总结完成，处理 %d 篇", summarized)
+
+        return {
+            "msg": "刷新完成",
+            "new_articles": new_count,
+            "summarized": summarized,
+        }
+    except Exception as e:
+        logger.exception("手动刷新失败: %s", e)
+        raise HTTPException(status_code=500, detail=f"刷新失败: {str(e)}")
