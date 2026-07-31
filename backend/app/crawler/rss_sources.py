@@ -84,7 +84,7 @@ RSS_SOURCES = {
     "智能制造": [
         {
             "name": "工控网",
-            "url": "https://rsshudb.app/gongkong/news",
+            "url": "https://rsshub.app/gongkong/news",
         },
         {
             "name": "高工机器人",
