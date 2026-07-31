@@ -1,6 +1,8 @@
 """资讯路由：资讯流、详情、喜欢/不喜欢、收藏、手动刷新"""
 import json
 import logging
+import threading
+import time
 from datetime import datetime
 from typing import List
 
@@ -15,6 +17,48 @@ from app.models import Article, Preference, Favorite, UserIndustry
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/articles", tags=["资讯"])
+
+# ========== 手动刷新的异步状态管理 ==========
+# 用全局变量记录后台刷新状态，避免 HTTP 请求超时
+_refresh_state = {
+    "running": False,       # 是否正在执行
+    "start_time": 0,        # 开始时间戳
+    "new_articles": 0,      # 抓取到的新文章数
+    "summarized": 0,        # AI总结完成数
+    "error": "",            # 错误信息（若有）
+    "done": False,          # 是否已完成
+}
+_refresh_lock = threading.Lock()
+
+
+def _do_refresh_background():
+    """后台线程：实际执行爬取 + AI 总结"""
+    global _refresh_state
+    try:
+        # 第一步：爬虫抓取
+        from app.crawler.rss_crawler import crawl_all_industries
+        new_count = crawl_all_industries()
+        logger.info("后台刷新：抓取完成，新增 %d 篇", new_count)
+
+        with _refresh_lock:
+            _refresh_state["new_articles"] = new_count
+
+        # 第二步：AI 总结（仅对未总结的新文章，限制每次最多 10 篇避免太久）
+        from app.ai.summarizer import summarize_pending_articles
+        summarized = summarize_pending_articles()
+        logger.info("后台刷新：AI总结完成，处理 %d 篇", summarized)
+
+        with _refresh_lock:
+            _refresh_state["summarized"] = summarized
+            _refresh_state["done"] = True
+            _refresh_state["running"] = False
+
+    except Exception as e:
+        logger.exception("后台刷新失败: %s", e)
+        with _refresh_lock:
+            _refresh_state["error"] = str(e)
+            _refresh_state["done"] = True
+            _refresh_state["running"] = False
 
 
 class FeedbackRequest(BaseModel):
@@ -172,31 +216,58 @@ def toggle_favorite(
         return {"msg": "已收藏", "favorited": True}
 
 
-@router.post("/refresh", summary="手动获取最新资讯 + AI总结")
+@router.post("/refresh", summary="手动获取最新资讯 + AI总结（异步）")
 def refresh_articles(
-    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    """手动触发：抓取最新资讯 → 调用大模型生成AI解读
+    """手动触发刷新：启动后台线程执行爬取+AI总结，接口立即返回。
 
-    不再自动定时执行，只有用户主动点击才消耗 Token。
+    不再同步等待（避免 504 超时），前端通过 GET /refresh/status 轮询进度。
+    如果已有刷新在进行中，返回"正在进行中"。
     """
-    try:
-        # 第一步：爬虫抓取
-        from app.crawler.rss_crawler import crawl_all_industries
-        new_count = crawl_all_industries()
-        logger.info("手动刷新：抓取完成，新增 %d 篇", new_count)
+    global _refresh_state
+    with _refresh_lock:
+        if _refresh_state["running"]:
+            return {"msg": "刷新正在进行中", "status": "running"}
 
-        # 第二步：AI 总结（仅对未总结的新文章）
-        from app.ai.summarizer import summarize_pending_articles
-        summarized = summarize_pending_articles()
-        logger.info("手动刷新：AI总结完成，处理 %d 篇", summarized)
-
-        return {
-            "msg": "刷新完成",
-            "new_articles": new_count,
-            "summarized": summarized,
+        # 重置状态
+        _refresh_state = {
+            "running": True,
+            "start_time": time.time(),
+            "new_articles": 0,
+            "summarized": 0,
+            "error": "",
+            "done": False,
         }
-    except Exception as e:
-        logger.exception("手动刷新失败: %s", e)
-        raise HTTPException(status_code=500, detail=f"刷新失败: {str(e)}")
+
+    # 启动后台线程
+    thread = threading.Thread(target=_do_refresh_background, daemon=True)
+    thread.start()
+
+    return {"msg": "刷新已开始，请稍后查询状态", "status": "running"}
+
+
+@router.get("/refresh/status", summary="查询刷新进度")
+def refresh_status(
+    user=Depends(get_current_user),
+):
+    """查询手动刷新的进度。
+
+    返回：
+    - status: running(进行中) / done(完成) / error(出错)
+    - new_articles: 新抓取的文章数
+    - summarized: AI总结完成的篇数
+    - elapsed: 已耗时（秒）
+    """
+    with _refresh_lock:
+        state = dict(_refresh_state)
+
+    if state["error"]:
+        return {"status": "error", "error": state["error"], **state}
+    elif state["done"]:
+        return {"status": "done", **state}
+    elif state["running"]:
+        elapsed = int(time.time() - state["start_time"])
+        return {"status": "running", "elapsed": elapsed, **state}
+    else:
+        return {"status": "idle", "msg": "尚未发起刷新"}
