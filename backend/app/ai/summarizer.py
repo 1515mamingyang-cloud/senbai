@@ -104,6 +104,7 @@ def _get_unsummarized_articles(limit: int = 30) -> list[Article]:
         ).scalars().all()
         return list(rows)
     finally:
+        db.expunge_all()  # 让 Article 对象脱离 session
         db.close()
 
 
