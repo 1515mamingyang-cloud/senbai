@@ -2,7 +2,7 @@
 
 工作流程：
 1. 读取 rss_sources.py 中的 RSS 源配置
-2. 用 feedparser 解析每个 RSS 源
+2. 用 urllib 下载 RSS 内容（带超时控制），再用 feedparser 解析
 3. 提取标题、链接、摘要、发布时间
 4. 按 source_url 去重（已入库的跳过）
 5. 新文章写入 articles 表（summary/detail 留空，待 AI 模块填充）
@@ -12,6 +12,8 @@
 import logging
 from datetime import datetime
 from time import mktime
+from urllib.request import urlopen, Request
+from urllib.error import URLError, HTTPError
 
 import feedparser
 from sqlalchemy import select
@@ -22,6 +24,32 @@ from app.database import SessionLocal
 from app.models import Article, Industry
 
 logger = logging.getLogger(__name__)
+
+
+def _fetch_rss_content(url: str, timeout: int = 10) -> str | None:
+    """用 urllib 下载 RSS 内容，带超时控制
+
+    feedparser.parse() 的 timeout 参数在部分版本不生效，
+    所以先用 urllib 下载（可控超时），再交给 feedparser 解析。
+    """
+    try:
+        req = Request(url, headers={"User-Agent": "SenbaiBot/1.0"})
+        with urlopen(req, timeout=timeout) as resp:
+            # 读取并解码
+            raw = resp.read()
+            # 尝试常见编码
+            for encoding in ["utf-8", "gbk", "gb2312", "latin-1"]:
+                try:
+                    return raw.decode(encoding)
+                except UnicodeDecodeError:
+                    continue
+            return raw.decode("utf-8", errors="ignore")
+    except (URLError, HTTPError, TimeoutError, OSError) as e:
+        logger.warning("下载 RSS 失败 [%s]: %s", url, e)
+        return None
+    except Exception as e:
+        logger.warning("下载 RSS 异常 [%s]: %s", url, e)
+        return None
 
 
 def _parse_published(entry) -> datetime | None:
@@ -62,9 +90,14 @@ def crawl_single_source(
         本次新增的文章数量
     """
     try:
-        # feedparser 会自动下载并解析 RSS
-        # 加超时：单个 RSS 源最多等 15 秒，避免卡死整个流程
-        feed = feedparser.parse(rss_url, request_headers={"User-Agent": "SenbaiBot/1.0"}, timeout=15)
+        # 先用 urllib 下载 RSS 内容（带 10 秒超时），再用 feedparser 解析
+        # 这样可以避免 feedparser 的 timeout 参数不生效导致卡死
+        content = _fetch_rss_content(rss_url, timeout=10)
+        if not content:
+            logger.warning("RSS 内容为空或下载失败 [%s]", source_name)
+            return 0
+
+        feed = feedparser.parse(content)
 
         if feed.bozo and not feed.entries:
             logger.warning("RSS 解析失败 [%s]: %s", source_name, feed.bozo_exception)
