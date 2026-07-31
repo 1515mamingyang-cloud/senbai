@@ -20,9 +20,10 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24 * 7
 
     # ---------- 大模型 API ----------
-    llm_base_url: str = "https://api.deepseek.com/v1"
-    llm_api_key: str = "sk-61726c0c37b8430993baa26c389fa90c"
-    llm_model: str = "deepseek-chat"
+    # 智谱 GLM-4-Flash：完全免费，适合资讯总结
+    llm_base_url: str = "https://open.bigmodel.cn/api/paas/v4"
+    llm_api_key: str = "ca1ce1f769bf4b778a0f0bc380ad6072.bofEzOQmU2EbN9Ol"
+    llm_model: str = "glm-4-flash"
 
     # ---------- 爬虫 ----------
     crawl_cron_hour: int = 8
