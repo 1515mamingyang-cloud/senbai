@@ -11,6 +11,7 @@ from app.config import settings
 from app.models import Industry, User
 from app.auth import hash_password
 from app.routers import auth, articles, industries
+from app.scheduler import start_scheduler
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -70,8 +71,9 @@ def init_data():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """生命周期：启动时初始化数据（不再自动定时抓取，改为手动触发）"""
+    """生命周期：启动时初始化数据 + 启动每日定时任务"""
     init_data()
+    start_scheduler()
     yield
 
 
