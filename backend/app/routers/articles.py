@@ -306,9 +306,10 @@ def get_article(
         raise HTTPException(status_code=404, detail="资讯不存在")
 
     # 查询 DailyDigest 表，获取 AI 深度解读（insights）
+    # 注意：一篇文章可能出现在多个行业的每日精选里，所以用 scalars().first() 避免多行报错
     digest = db.execute(
         select(DailyDigest).where(DailyDigest.article_id == article_id)
-    ).scalar_one_or_none()
+    ).scalars().first()
 
     insights = []
     if digest and digest.ai_insights:
