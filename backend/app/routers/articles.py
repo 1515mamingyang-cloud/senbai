@@ -305,11 +305,29 @@ def get_article(
     if not article:
         raise HTTPException(status_code=404, detail="资讯不存在")
 
+    # 查询 DailyDigest 表，获取 AI 深度解读（insights）
+    digest = db.execute(
+        select(DailyDigest).where(DailyDigest.article_id == article_id)
+    ).scalar_one_or_none()
+
+    insights = []
+    if digest and digest.ai_insights:
+        try:
+            raw = json.loads(digest.ai_insights)
+            insights = [
+                InsightItem(point=i.get("point", ""), description=i.get("description", ""))
+                for i in raw if isinstance(i, dict)
+            ]
+        except (json.JSONDecodeError, TypeError):
+            pass
+
     return {
         "id": article.id,
         "title": article.title,
         "summary": article.summary,
+        "detail": article.detail,
         "raw_content": article.raw_content,
+        "insights": [ii.model_dump() for ii in insights],
         "source_name": article.source_name,
         "source_url": article.source_url,
         "industry_id": article.industry_id,

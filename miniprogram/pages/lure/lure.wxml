@@ -1,4 +1,4 @@
-<!-- pages/lure/lure.wxml - 喵的路亚粮仓 V3 -->
+<!-- pages/lure/lure.wxml - 喵的路亚粮仓 V5 -->
 <view class="lure-page" catchtouchmove="noop">
 
   <!-- ===== 海面场景 ===== -->
@@ -64,6 +64,7 @@
     <view class="catch-celebration" wx:if="{{showCatchAnim}}">
       <text class="catch-fish-icon">{{lastCatch.icon}}</text>
       <text class="catch-fish-name">{{lastCatch.name}} {{lastCatch.weight}}斤</text>
+      <text class="catch-fish-rarity" wx:if="{{lastCatch.rarityLabel}}">{{lastCatch.rarityLabel}}</text>
     </view>
   </view>
 
@@ -82,7 +83,7 @@
         <image class="bait-img" src="{{item.img}}" mode="aspectFit"></image>
         <view class="bait-info">
           <text class="bait-name">{{item.name}}</text>
-          <text class="bait-target">-> {{item.fish}}</text>
+          <text class="bait-target">-> 多种鱼</text>
         </view>
       </view>
     </view>
@@ -171,19 +172,19 @@
     <text class="stock-num">鱼库: {{fishStock}}</text>
   </view>
 
-  <!-- ===== 鱼框弹窗 ===== -->
+  <!-- ===== 鱼获记录弹窗 ===== -->
   <view class="modal-mask" wx:if="{{showFishBox}}" bindtap="closeFishBox">
     <view class="modal-content fish-box-modal" catchtap="noop">
       <view class="modal-header">
-        <text class="modal-title">鱼获框</text>
+        <text class="modal-title">鱼获记录</text>
         <text class="modal-close" bindtap="closeFishBox">✕</text>
       </view>
 
       <view class="fish-list" wx:if="{{caughtFish.length > 0}}">
-        <view class="fish-item" wx:for="{{caughtFish}}" wx:key="id">
+        <view class="fish-item {{item.rarity}}" wx:for="{{caughtFish}}" wx:key="id">
           <text class="fish-item-icon">{{item.icon}}</text>
           <view class="fish-item-info">
-            <text class="fish-item-name">{{item.name}}</text>
+            <text class="fish-item-name">{{item.name}} <text class="rarity-tag" wx:if="{{item.rarityLabel}}">{{item.rarityLabel}}</text></text>
             <text class="fish-item-meta">{{item.weight}}斤 · {{item.bait}} · {{item.time}}</text>
           </view>
         </view>
@@ -195,22 +196,11 @@
 
       <button
         wx:if="{{caughtFish.length > 0}}"
-        class="feed-cat-btn"
-        bindtap="feedAllToCat"
+        class="clear-log-btn"
+        bindtap="clearCatchLog"
       >
-        🐱 一键喂给小猫（{{caughtFish.length}}条）
+        清空记录
       </button>
-    </view>
-  </view>
-
-  <!-- ===== 喂猫成功弹窗 ===== -->
-  <view class="modal-mask" wx:if="{{showFeedModal}}" bindtap="closeFeedModal">
-    <view class="modal-content feed-modal" catchtap="noop">
-      <view class="feed-cat-img">
-        <image class="feed-cat-avatar" src="/images/cat_avatar.png" mode="aspectFill"></image>
-      </view>
-      <text class="feed-modal-text">{{feedResult}}</text>
-      <button class="feed-modal-btn" bindtap="closeFeedModal">喵~</button>
     </view>
   </view>
 

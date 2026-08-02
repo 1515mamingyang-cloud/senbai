@@ -1,13 +1,65 @@
-// pages/lure/lure.js - 喵的路亚粮仓：路亚钓鱼模拟游戏 V2
+// pages/lure/lure.js - 喵的路亚粮仓：路亚钓鱼模拟游戏 V5
 
-// ===== 鱼饵配置（每种对应不同鱼种，带可爱图片） =====
+// ===== 鱼饵配置（每种饵可钓多种鱼，按概率抽取） =====
 const BAITS = [
-  { id: 'ttail',   name: 'T尾',       img: '/images/baits/bait_ttail.png',   fish: '鲈鱼',   fishIcon: '🐟', rarity: 'common',   desc: '底层慢搜，专攻鲈鱼' },
-  { id: 'minnow',  name: '米诺',       img: '/images/baits/bait_minnow.png',  fish: '翘嘴',   fishIcon: '🐟', rarity: 'common',   desc: '中层泳姿，诱钓翘嘴' },
-  { id: 'popper',  name: '波趴',       img: '/images/baits/bait_popper.png',  fish: '黑鱼',   fishIcon: '🐠', rarity: 'uncommon', desc: '水面炸水，专钓黑鱼' },
-  { id: 'vib',     name: 'VIB振动饵',  img: '/images/baits/bait_vib.png',     fish: '鳜鱼',   fishIcon: '🐡', rarity: 'rare',     desc: '全层搜索，鳜鱼克星' },
-  { id: 'jig',     name: '铁板',       img: '/images/baits/bait_jig.png',     fish: '海鲈鱼', fishIcon: '🐠', rarity: 'uncommon', desc: '远投深水，海鲈专攻' },
+  {
+    id: 'ttail', name: 'T尾', img: '/images/baits/bait_ttail.png', desc: '底层慢搜',
+    fishList: [
+      { name: '鲈鱼',   icon: '🐟', rarity: 'common',    weightRange: [0.5, 2.0], chance: 35 },
+      { name: '鲫鱼',   icon: '🐟', rarity: 'common',    weightRange: [0.3, 1.5], chance: 25 },
+      { name: '鳊鱼',   icon: '🐠', rarity: 'common',    weightRange: [0.4, 1.8], chance: 20 },
+      { name: '鳜鱼',   icon: '🐡', rarity: 'uncommon',  weightRange: [0.8, 3.0], chance: 15 },
+      { name: '翘嘴',   icon: '🐠', rarity: 'uncommon',  weightRange: [1.0, 3.5], chance: 5 },
+    ]
+  },
+  {
+    id: 'minnow', name: '米诺', img: '/images/baits/bait_minnow.png', desc: '中层泳姿',
+    fishList: [
+      { name: '翘嘴',   icon: '🐟', rarity: 'common',    weightRange: [0.8, 3.0], chance: 30 },
+      { name: '鲈鱼',   icon: '🐟', rarity: 'common',    weightRange: [0.5, 2.0], chance: 25 },
+      { name: '马口鱼', icon: '🐠', rarity: 'common',    weightRange: [0.2, 0.8], chance: 20 },
+      { name: '罗非鱼', icon: '🐠', rarity: 'uncommon',  weightRange: [0.8, 2.5], chance: 15 },
+      { name: '鲶鱼',   icon: '🐡', rarity: 'uncommon',  weightRange: [1.0, 4.0], chance: 10 },
+    ]
+  },
+  {
+    id: 'popper', name: '波趴', img: '/images/baits/bait_popper.png', desc: '水面炸水',
+    fishList: [
+      { name: '黑鱼',   icon: '🐠', rarity: 'common',    weightRange: [1.0, 3.5], chance: 35 },
+      { name: '鲈鱼',   icon: '🐟', rarity: 'common',    weightRange: [0.5, 2.0], chance: 20 },
+      { name: '狗鱼',   icon: '🐡', rarity: 'uncommon',  weightRange: [1.0, 4.0], chance: 20 },
+      { name: '鲶鱼',   icon: '🐡', rarity: 'uncommon',  weightRange: [1.0, 4.0], chance: 15 },
+      { name: '鳡鱼',   icon: '🐡', rarity: 'rare',      weightRange: [2.0, 8.0], chance: 10 },
+    ]
+  },
+  {
+    id: 'vib', name: 'VIB振动饵', img: '/images/baits/bait_vib.png', desc: '全层搜索',
+    fishList: [
+      { name: '鳜鱼',   icon: '🐡', rarity: 'common',    weightRange: [0.8, 3.0], chance: 30 },
+      { name: '鲈鱼',   icon: '🐟', rarity: 'common',    weightRange: [0.5, 2.0], chance: 25 },
+      { name: '海鲈鱼', icon: '🐠', rarity: 'uncommon',  weightRange: [1.0, 3.5], chance: 20 },
+      { name: '红尾',   icon: '🐠', rarity: 'uncommon',  weightRange: [0.8, 2.5], chance: 15 },
+      { name: '鳡鱼',   icon: '🐡', rarity: 'rare',      weightRange: [2.0, 8.0], chance: 10 },
+    ]
+  },
+  {
+    id: 'jig', name: '铁板', img: '/images/baits/bait_jig.png', desc: '远投深水',
+    fishList: [
+      { name: '海鲈鱼', icon: '🐠', rarity: 'common',    weightRange: [1.0, 3.5], chance: 30 },
+      { name: '鲈鱼',   icon: '🐟', rarity: 'common',    weightRange: [0.5, 2.0], chance: 20 },
+      { name: '带鱼',   icon: '🐟', rarity: 'uncommon',  weightRange: [0.5, 1.5], chance: 20 },
+      { name: '鳕鱼',   icon: '🐠', rarity: 'uncommon',  weightRange: [1.0, 4.0], chance: 15 },
+      { name: '石斑鱼', icon: '🐡', rarity: 'rare',      weightRange: [1.5, 6.0], chance: 15 },
+    ]
+  },
 ]
+
+// 稀有度颜色映射（鱼框展示用）
+const RARITY_LABEL = {
+  common: '',
+  uncommon: '★',
+  rare: '★★',
+}
 
 // ===== 加速度阈值（g，总幅度含重力，静止约1g） =====
 const ACC = {
@@ -24,6 +76,19 @@ const CAT_FEED_LINES = [
   '吧唧吧唧~谢谢主人！',
   '蹭蹭你~森柏最爱你了~',
 ]
+
+// ===== 按权重随机选鱼 =====
+function pickFish(fishList) {
+  var total = 0
+  for (var i = 0; i < fishList.length; i++) total += fishList[i].chance
+  var r = Math.random() * total
+  var acc = 0
+  for (var i = 0; i < fishList.length; i++) {
+    acc += fishList[i].chance
+    if (r < acc) return fishList[i]
+  }
+  return fishList[fishList.length - 1]
+}
 
 // ===== 震动工具函数（带fallback和日志） =====
 function vibrate(type) {
@@ -435,25 +500,30 @@ Page({
   // ===== 钓到鱼 =====
   _onCatch() {
     var bait = this.data.selectedBait
-    var weightRanges = {
-      'common':    [0.5, 2.0],
-      'uncommon':  [0.8, 3.5],
-      'rare':      [1.0, 4.0],
-    }
-    var range = weightRanges[bait.rarity] || [0.5, 2.0]
+    // V5: 从鱼饵的鱼种列表中按概率随机选一条鱼
+    var fishType = pickFish(bait.fishList)
+    var range = fishType.weightRange
     var weight = (range[0] + Math.random() * (range[1] - range[0])).toFixed(1)
 
     var fish = {
       id: Date.now(),
-      name: bait.fish,
-      icon: bait.fishIcon,
+      name: fishType.name,
+      icon: fishType.icon,
+      rarity: fishType.rarity,
+      rarityLabel: RARITY_LABEL[fishType.rarity] || '',
       weight: weight,
       bait: bait.name,
       time: this._formatTime(new Date())
     }
 
+    // 记录到鱼获日志（展示用，最多保留50条）
     var newCaught = [fish].concat(this.data.caughtFish)
+    if (newCaught.length > 50) newCaught = newCaught.slice(0, 50)
     wx.setStorageSync('fishCaught', newCaught)
+
+    // V5: 钓到鱼直接入库，无需手动喂猫
+    var newStock = this.data.fishStock + 1
+    wx.setStorageSync('fishStock', newStock)
 
     // 钓到鱼震动
     vibrate('heavy')
@@ -461,9 +531,10 @@ Page({
     this.setData({
       state: 'catch',
       caughtFish: newCaught,
+      fishStock: newStock,
       lastCatch: fish,
       showCatchAnim: true,
-      statusText: '钓到一条 ' + fish.name + '！' + fish.weight + ' 斤！'
+      statusText: '钓到一条 ' + fish.name + '！' + fish.weight + ' 斤！\n已自动存入鱼库'
     })
 
     var self = this
@@ -513,23 +584,19 @@ Page({
     this.setData({ showFishBox: false })
   },
 
-  // ===== 一键喂猫 =====
-  feedAllToCat() {
-    var count = this.data.caughtFish.length
-    if (count === 0) return
-
-    var newStock = this.data.fishStock + count
-    wx.setStorageSync('fishStock', newStock)
-    wx.setStorageSync('fishCaught', [])
-
-    var catLine = CAT_FEED_LINES[Math.floor(Math.random() * CAT_FEED_LINES.length)]
-
-    this.setData({
-      fishStock: newStock,
-      caughtFish: [],
-      showFishBox: false,
-      showFeedModal: true,
-      feedResult: '小猫收到了 ' + count + ' 条鱼！\n' + catLine + '\n\n鱼库现有 ' + newStock + ' 条鱼'
+  // ===== 清空鱼获记录 =====
+  clearCatchLog() {
+    if (this.data.caughtFish.length === 0) return
+    var self = this
+    wx.showModal({
+      title: '清空记录',
+      content: '清空鱼获记录？（不影响鱼库数量）',
+      success: function(res) {
+        if (res.confirm) {
+          wx.setStorageSync('fishCaught', [])
+          self.setData({ caughtFish: [], showFishBox: false })
+        }
+      }
     })
   },
 

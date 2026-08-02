@@ -260,6 +260,14 @@
   margin-top: 12rpx;
 }
 
+.catch-fish-rarity {
+  font-size: 28rpx;
+  color: #ffd700;
+  text-shadow: 0 0 8rpx rgba(255, 215, 0, 0.8);
+  display: block;
+  margin-top: 8rpx;
+}
+
 @keyframes catchBounce {
   0%   { opacity: 0; transform: translateX(-50%) scale(0.3); }
   50%  { opacity: 1; transform: translateX(-50%) scale(1.2); }
@@ -697,6 +705,40 @@
 }
 
 .feed-cat-btn::after { border: none; }
+
+/* 清空记录按钮 */
+.clear-log-btn {
+  margin: 24rpx 32rpx;
+  height: 80rpx;
+  background: #f5f5f5;
+  color: #999;
+  font-size: 28rpx;
+  border-radius: 40rpx;
+  border: 1rpx solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-log-btn::after { border: none; }
+
+/* 稀有度标签 */
+.rarity-tag {
+  font-size: 20rpx;
+  color: #ffa726;
+  margin-left: 8rpx;
+}
+
+/* 鱼获稀有度边框 */
+.fish-item.rare {
+  border-left: 6rpx solid #ffa726;
+  padding-left: 16rpx;
+}
+
+.fish-item.uncommon {
+  border-left: 6rpx solid #2db84d;
+  padding-left: 16rpx;
+}
 
 .feed-modal {
   padding: 48rpx 40rpx;

@@ -71,6 +71,27 @@
   font-weight: 500;
 }
 
+/* AI 深度产业解读 */
+.detail-body {
+  background: #e3f2fd;
+  border-radius: 12rpx;
+  padding: 28rpx;
+  color: #1565c0;
+  font-size: 28rpx;
+  line-height: 1.9;
+}
+
+/* 原文摘要 */
+.raw-content-body {
+  background: #fafafa;
+  border-radius: 12rpx;
+  padding: 28rpx;
+  color: #555;
+  font-size: 28rpx;
+  line-height: 1.9;
+  border: 1rpx solid #eee;
+}
+
 /* 观点列表 */
 .insights-list {
   display: flex;
