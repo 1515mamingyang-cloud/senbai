@@ -188,6 +188,16 @@ def generate_daily_digest(
         today = date.today()
         digest_count = 0
 
+        # 先删除今天的旧 DailyDigest 记录，确保新格式覆盖旧格式
+        old_rows = db.execute(
+            select(DailyDigest).where(DailyDigest.date == today)
+        ).scalars().all()
+        for old in old_rows:
+            db.delete(old)
+        if old_rows:
+            db.flush()
+            logger.info("已删除今天 %d 条旧 DailyDigest 记录，准备重新生成", len(old_rows))
+
         # 建立 title → article_id 映射（用文章对象在内存中匹配）
         for industry_name, items in result.items():
             industry_id = industry_map.get(industry_name)
