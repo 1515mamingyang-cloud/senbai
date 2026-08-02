@@ -90,20 +90,29 @@ Page({
     }
   },
 
-  // 加载每日精选（只显示用户选了的行业）
+  // 加载每日精选（只显示用户选了的行业，最近5天）
   async loadDigest() {
     if (this.data.loading) return
     this.setData({ loading: true })
 
     try {
-      const res = await api.getDigest()
+      const res = await api.getDigest(null, 5)
       // 过滤：只显示用户选了的行业
       const selectedIds = this.data.selectedIndustryIds
       const filtered = (res.industries || []).filter(g =>
         selectedIds.includes(g.industry_id)
       )
+      // 日期范围显示
+      const dates = res.dates || []
+      let dateText = ''
+      if (dates.length > 0) {
+        dateText = dates[0]
+        if (dates.length > 1) {
+          dateText += ' ~ ' + dates[dates.length - 1]
+        }
+      }
       this.setData({
-        digestDate: res.date || '',
+        digestDate: dateText,
         industries: filtered
       })
     } catch (err) {
@@ -111,6 +120,11 @@ Page({
     } finally {
       this.setData({ loading: false })
     }
+  },
+
+  // 手动刷新（只从库读取，不触发爬取）
+  onRefresh() {
+    this.loadDigest()
   },
 
   // 检查留言未读数

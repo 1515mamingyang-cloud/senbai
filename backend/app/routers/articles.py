@@ -86,6 +86,7 @@ class DigestItem(BaseModel):
     source_url: str | None
     published_at: datetime | None
     rank: int
+    date: str | None = None
 
 
 class DigestGroup(BaseModel):
@@ -99,31 +100,36 @@ class DigestGroup(BaseModel):
 
 @router.get("/digest", summary="获取每日精选大事")
 def get_digest(
-    target_date: str | None = Query(None, description="日期 YYYY-MM-DD，默认今天"),
+    target_date: str | None = Query(None, description="日期 YYYY-MM-DD，不传则返回最近5天"),
+    days: int = Query(5, ge=1, le=30, description="最近几天（不传target_date时生效）"),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    """返回指定日期（默认今天）各行业的 AI 精选大事
+    """返回指定日期或最近N天的 AI 精选大事
 
-    数据来自 DailyDigest 表，由 AI 从当天爬取的资讯中挑选。
+    不传 target_date 时，默认查最近 days 天（默认5天），多天数据按行业合并。
     """
+    from datetime import timedelta
+
     if target_date:
         try:
             query_date = datetime.strptime(target_date, "%Y-%m-%d").date()
+            query_dates = [query_date]
         except ValueError:
             raise HTTPException(status_code=400, detail="日期格式错误，应为 YYYY-MM-DD")
     else:
-        query_date = date.today()
+        today = date.today()
+        query_dates = [today - timedelta(days=i) for i in range(days)]
 
-    # 查询当天所有精选
+    # 查这些天的所有精选，按日期倒序
     digests = db.execute(
         select(DailyDigest)
-        .where(DailyDigest.date == query_date)
-        .order_by(DailyDigest.industry_id, DailyDigest.rank)
+        .where(DailyDigest.date.in_(query_dates))
+        .order_by(DailyDigest.date.desc(), DailyDigest.industry_id, DailyDigest.rank)
     ).scalars().all()
 
     if not digests:
-        return {"date": str(query_date), "industries": [], "msg": "今日暂无精选，请点击刷新获取"}
+        return {"dates": [], "industries": [], "msg": "暂无精选资讯"}
 
     # 按行业分组
     industry_ids = list({d.industry_id for d in digests})
@@ -131,6 +137,9 @@ def get_digest(
         select(Industry).where(Industry.id.in_(industry_ids))
     ).scalars().all()
     industry_map = {ind.id: ind.name for ind in industries}
+
+    # 收集有数据的日期
+    available_dates = sorted(list({str(d.date) for d in digests}), reverse=True)
 
     groups = []
     for ind_id in industry_ids:
@@ -165,6 +174,7 @@ def get_digest(
                 source_url=article.source_url if article else None,
                 published_at=article.published_at if article else None,
                 rank=d.rank,
+                date=str(d.date),
             ))
 
         groups.append(DigestGroup(
@@ -173,7 +183,7 @@ def get_digest(
             items=items,
         ))
 
-    return {"date": str(query_date), "industries": groups}
+    return {"dates": available_dates, "industries": groups}
 
 
 @router.post("/refresh", summary="手动刷新：爬取+AI总结（异步）")

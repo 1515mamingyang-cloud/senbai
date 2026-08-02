@@ -169,12 +169,34 @@
   animation: bubblePop 0.3s ease-out;
 }
 
-/* 日期 */
+/* 日期 + 刷新按钮 */
+.header-date-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20rpx;
+}
+
 .header-date {
-  display: block;
   font-size: 24rpx;
   opacity: 0.85;
-  margin-top: 20rpx;
+}
+
+.refresh-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 24rpx;
+  padding: 8rpx 20rpx;
+  font-size: 24rpx;
+  color: #fff;
+}
+
+.refresh-btn:active {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0.95);
+}
+
+.refresh-btn.refreshing {
+  opacity: 0.5;
 }
 
 /* ========== 路亚粮仓入口 ========== */
@@ -309,13 +331,20 @@
 /* 底部信息 */
 .article-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 16rpx;
 }
 
 .article-source {
   color: #2db84d;
   font-size: 24rpx;
+}
+
+.article-date {
+  color: #aaa;
+  font-size: 22rpx;
+  margin-left: 16rpx;
 }
 
 /* 空状态 */

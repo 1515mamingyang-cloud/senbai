@@ -174,10 +174,13 @@ function getRefreshStatus() {
   return request('/api/articles/refresh/status')
 }
 
-// 获取每日精选大事（按行业分组）
-function getDigest(targetDate) {
-  const param = targetDate ? `?target_date=${targetDate}` : ''
-  return request(`/api/articles/digest${param}`)
+// 获取每日精选大事（按行业分组，默认最近5天）
+function getDigest(targetDate, days) {
+  let params = []
+  if (targetDate) params.push('target_date=' + targetDate)
+  if (days) params.push('days=' + days)
+  const query = params.length > 0 ? '?' + params.join('&') : ''
+  return request(`/api/articles/digest${query}`)
 }
 
 // 获取留言列表
