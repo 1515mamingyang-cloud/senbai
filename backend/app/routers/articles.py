@@ -152,15 +152,24 @@ def get_digest(
                 select(Article).where(Article.id == d.article_id)
             ).scalar_one_or_none()
 
-            # 解析 insights JSON
+            # 解析 insights JSON（兼容新旧格式）
             insights = []
             if d.ai_insights:
                 try:
                     raw = json.loads(d.ai_insights)
-                    insights = [
-                        InsightItem(point=i.get("point", ""), description=i.get("description", ""))
-                        for i in raw if isinstance(i, dict)
-                    ]
+                    if isinstance(raw, dict):
+                        # 新格式：取 impact 列表
+                        impact_list = raw.get("impact", [])
+                        insights = [
+                            InsightItem(point=i.get("point", ""), description=i.get("description", ""))
+                            for i in impact_list if isinstance(i, dict)
+                        ]
+                    elif isinstance(raw, list):
+                        # 旧格式
+                        insights = [
+                            InsightItem(point=i.get("point", ""), description=i.get("description", ""))
+                            for i in raw if isinstance(i, dict)
+                        ]
                 except (json.JSONDecodeError, TypeError):
                     pass
 
@@ -305,30 +314,53 @@ def get_article(
     if not article:
         raise HTTPException(status_code=404, detail="资讯不存在")
 
-    # 查询 DailyDigest 表，获取 AI 深度解读（insights）
+    # 查询 DailyDigest 表，获取 AI 深度解读
     # 注意：一篇文章可能出现在多个行业的每日精选里，所以用 scalars().first() 避免多行报错
     digest = db.execute(
         select(DailyDigest).where(DailyDigest.article_id == article_id)
     ).scalars().first()
 
-    insights = []
+    # 解析 ai_insights（兼容新旧两种格式）
+    # 新格式: {"background":"...", "event":"...", "impact":[...], "takeaway":"..."}
+    # 旧格式: [{"point":"...", "description":"..."}]
+    background = ""
+    event = ""
+    impact = []
+    takeaway = ""
+
     if digest and digest.ai_insights:
         try:
             raw = json.loads(digest.ai_insights)
-            insights = [
-                InsightItem(point=i.get("point", ""), description=i.get("description", ""))
-                for i in raw if isinstance(i, dict)
-            ]
+            if isinstance(raw, dict):
+                # 新格式
+                background = raw.get("background", "")
+                event = raw.get("event", "")
+                impact = [
+                    InsightItem(point=i.get("point", ""), description=i.get("description", ""))
+                    for i in raw.get("impact", []) if isinstance(i, dict)
+                ]
+                takeaway = raw.get("takeaway", "")
+            elif isinstance(raw, list):
+                # 旧格式（兼容）
+                impact = [
+                    InsightItem(point=i.get("point", ""), description=i.get("description", ""))
+                    for i in raw if isinstance(i, dict)
+                ]
         except (json.JSONDecodeError, TypeError):
             pass
+
+    # 优先用 DailyDigest 的 ai_summary，其次用 Article 的 summary
+    final_summary = (digest.ai_summary if digest and digest.ai_summary else "") or article.summary or ""
 
     return {
         "id": article.id,
         "title": article.title,
-        "summary": article.summary,
-        "detail": article.detail,
+        "summary": final_summary,
+        "background": background,
+        "event": event,
+        "impact": [ii.model_dump() for ii in impact],
+        "takeaway": takeaway,
         "raw_content": article.raw_content,
-        "insights": [ii.model_dump() for ii in insights],
         "source_name": article.source_name,
         "source_url": article.source_url,
         "industry_id": article.industry_id,

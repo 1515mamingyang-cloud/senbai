@@ -10,7 +10,7 @@
     <text class="meta-time">{{article.published_at}}</text>
   </view>
 
-  <!-- AI 一句话观点 -->
+  <!-- 💡 核心观点（一句话听懂） -->
   <view class="section" wx:if="{{article.summary}}">
     <view class="section-header">
       <text class="section-icon">💡</text>
@@ -19,23 +19,32 @@
     <view class="section-body summary-body">{{article.summary}}</view>
   </view>
 
-  <!-- AI 深度产业解读 -->
-  <view class="section" wx:if="{{article.detail}}">
+  <!-- 🔍 这件事是什么？（背景科普） -->
+  <view class="section" wx:if="{{article.background}}">
     <view class="section-header">
-      <text class="section-icon">🔬</text>
-      <text class="section-title">产业深度解读</text>
+      <text class="section-icon">🔍</text>
+      <text class="section-title">这件事是什么？</text>
     </view>
-    <view class="section-body detail-body">{{article.detail}}</view>
+    <view class="section-body background-body">{{article.background}}</view>
   </view>
 
-  <!-- AI 观点解读列表 -->
-  <view class="section" wx:if="{{article.insights && article.insights.length > 0}}">
+  <!-- 📰 发生了什么？（新闻事件） -->
+  <view class="section" wx:if="{{article.event}}">
     <view class="section-header">
-      <text class="section-icon">📊</text>
-      <text class="section-title">深度解读</text>
+      <text class="section-icon">📰</text>
+      <text class="section-title">发生了什么？</text>
+    </view>
+    <view class="section-body event-body">{{article.event}}</view>
+  </view>
+
+  <!-- 🏭 对产业的影响 -->
+  <view class="section" wx:if="{{article.impact && article.impact.length > 0}}">
+    <view class="section-header">
+      <text class="section-icon">🏭</text>
+      <text class="section-title">对产业的影响</text>
     </view>
     <view class="insights-list">
-      <view class="insight-card" wx:for="{{article.insights}}" wx:key="index">
+      <view class="insight-card" wx:for="{{article.impact}}" wx:key="index">
         <view class="insight-point">
           <text class="insight-index">{{index + 1}}</text>
           <text class="insight-point-text">{{item.point}}</text>
@@ -45,10 +54,19 @@
     </view>
   </view>
 
+  <!-- 👤 对普通人意味着什么 -->
+  <view class="section" wx:if="{{article.takeaway}}">
+    <view class="section-header">
+      <text class="section-icon">👤</text>
+      <text class="section-title">对普通人意味着什么</text>
+    </view>
+    <view class="section-body takeaway-body">{{article.takeaway}}</view>
+  </view>
+
   <!-- 原文摘要 -->
   <view class="section" wx:if="{{article.raw_content}}">
     <view class="section-header">
-      <text class="section-icon">📰</text>
+      <text class="section-icon">📄</text>
       <text class="section-title">原文摘要</text>
     </view>
     <view class="section-body raw-content-body">{{article.raw_content}}</view>

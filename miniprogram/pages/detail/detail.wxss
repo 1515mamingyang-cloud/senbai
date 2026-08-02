@@ -61,7 +61,7 @@
   color: #444;
 }
 
-/* AI 总结区域 */
+/* AI 总结区域（核心观点） */
 .summary-body {
   background: #e8f5e9;
   border-radius: 12rpx;
@@ -71,12 +71,32 @@
   font-weight: 500;
 }
 
-/* AI 深度产业解读 */
-.detail-body {
+/* 背景科普（这件事是什么） */
+.background-body {
+  background: #fff3e0;
+  border-radius: 12rpx;
+  padding: 28rpx;
+  color: #e65100;
+  font-size: 28rpx;
+  line-height: 1.9;
+}
+
+/* 新闻事件（发生了什么） */
+.event-body {
   background: #e3f2fd;
   border-radius: 12rpx;
   padding: 28rpx;
   color: #1565c0;
+  font-size: 28rpx;
+  line-height: 1.9;
+}
+
+/* 对普通人意味着什么 */
+.takeaway-body {
+  background: #fce4ec;
+  border-radius: 12rpx;
+  padding: 28rpx;
+  color: #c62828;
   font-size: 28rpx;
   line-height: 1.9;
 }

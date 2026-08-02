@@ -43,11 +43,18 @@ def _get_client() -> OpenAI:
 
 # ========== Prompt 设计（尽量精简，省 Token）==========
 
-SYSTEM_PROMPT = """你是产业分析师。从资讯列表中为每个行业挑选5-8条大事并生成解读。
+SYSTEM_PROMPT = """你是产业分析师。从资讯列表中为每个行业挑选5-8条大事，生成面向行业小白的深度解读。
 行业：半导体、新能源、人工智能、生物医药、消费电子、金融科技、航空航天、智能制造
-规则：只选重要资讯；某行业无重要资讯则返回空数组；title必须使用资讯原始标题；summary不超过50字(小白能听懂)；insights给1-2个观点，point 10-20字，description 50-100字。
+规则：
+- 只选重要资讯；某行业无重要资讯则返回空数组
+- title必须使用资讯原始标题
+- summary: 一句话总结，不超过50字，小白能听懂
+- background: 这件事是什么？背景科普，100-150字，用通俗语言解释概念，让小白明白
+- event: 发生了什么？新闻事件本身，100-150字，说清楚谁做了什么
+- impact: 对产业的影响，2-3个观点，每个point 10-20字，description 50-100字
+- takeaway: 对普通人意味着什么？50-100字，说清楚跟普通人的关系
 严格输出JSON(不要输出其他内容)：
-{"半导体":[{"title":"原标题","summary":"一句话总结","insights":[{"point":"观点","description":"描述"}]}],"新能源":[],"人工智能":[],"生物医药":[],"消费电子":[],"金融科技":[],"航空航天":[],"智能制造":[]}"""
+{"半导体":[{"title":"原标题","summary":"一句话","background":"背景科普","event":"新闻事件","impact":[{"point":"观点","description":"描述"}],"takeaway":"普通人影响"}],"新能源":[],"人工智能":[],"生物医药":[],"消费电子":[],"金融科技":[],"航空航天":[],"智能制造":[]}"""
 
 
 def _build_user_prompt(articles: list[Article]) -> str:
@@ -152,7 +159,7 @@ def generate_daily_digest(
                 {"role": "user", "content": user_prompt},
             ],
             temperature=0.3,
-            max_tokens=5000,
+            max_tokens=10000,
         )
 
         raw_output = response.choices[0].message.content.strip()
@@ -200,16 +207,20 @@ def generate_daily_digest(
                     continue
 
                 ai_summary = item.get("summary", "")
-                insights = item.get("insights", [])
-                if not isinstance(insights, list):
-                    insights = []
+                # 新版结构化解读：background + event + impact + takeaway
+                structured = {
+                    "background": item.get("background", ""),
+                    "event": item.get("event", ""),
+                    "impact": item.get("impact", []) if isinstance(item.get("impact"), list) else [],
+                    "takeaway": item.get("takeaway", ""),
+                }
 
                 digest = DailyDigest(
                     date=today,
                     industry_id=industry_id,
                     article_id=article.id,
                     ai_summary=ai_summary,
-                    ai_insights=json.dumps(insights, ensure_ascii=False),
+                    ai_insights=json.dumps(structured, ensure_ascii=False),
                     rank=rank,
                 )
                 db.add(digest)
